@@ -4,12 +4,15 @@ server:
 spring:
   application:
     name: ai-insurance
+  cloud:
+    gcp:
+      project-id: ${GCP_PROJECT_ID:}
   ai:
     vertex:
       ai:
         gemini:
-          project-id: ***REMOVED***
-          api-key: ***REMOVED***
+          project-id: ${GCP_PROJECT_ID:}
+          api-key: ${GCP_VERTEX_API_KEY:}
           location: us-central1
 
 insurance:
