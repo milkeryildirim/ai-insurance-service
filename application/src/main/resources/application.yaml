@@ -4,3 +4,14 @@ server:
 spring:
   application:
     name: ai-insurance
+  ai:
+    vertex:
+      ai:
+        gemini:
+          project-id: ***REMOVED***
+          api-key: ***REMOVED***
+          location: us-central1
+
+insurance:
+  service:
+    base-url: http://localhost:8080
