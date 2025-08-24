@@ -1,7 +1,9 @@
 package tech.yildirim.aiinsurance.service;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -9,10 +11,17 @@ import org.springframework.stereotype.Service;
  * This class acts as a bridge between the controller and the Spring AI ChatClient.
  */
 @Service
-@RequiredArgsConstructor
+
 public class ChatService {
 
   private final ChatClient chatClient;
+
+  public ChatService(ChatClient.Builder builder) {
+    PromptChatMemoryAdvisor promptChatMemoryAdvisor = PromptChatMemoryAdvisor.builder(
+        MessageWindowChatMemory.builder().chatMemoryRepository(new InMemoryChatMemoryRepository())
+            .maxMessages(100).build()).build();
+    this.chatClient = builder.defaultAdvisors(promptChatMemoryAdvisor).build();
+  }
 
   /**
    * Sends a user's message to the configured AI model and returns the response.
