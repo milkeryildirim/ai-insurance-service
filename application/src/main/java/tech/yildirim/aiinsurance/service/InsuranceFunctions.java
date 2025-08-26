@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
 import tech.yildirim.aiinsurance.api.generated.model.CustomerDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
-import tech.yildirim.aiinsurance.client.CustomerServiceClient;
 
 /**
  * This class defines the functions (tools) that the AI model can invoke. Each function is
@@ -22,7 +21,7 @@ public class InsuranceFunctions {
 
   public static final Set<String> FUNCTIONS = Set.of("getCustomerById", "getPoliciesByCustomerId");
 
-  private final CustomerServiceClient customerServiceClient;
+
 
   /**
    * A function that retrieves a customer's details by their unique ID. The AI will use this
@@ -33,7 +32,7 @@ public class InsuranceFunctions {
   @Bean
   @Description("Get customer details by customer ID")
   public Function<GetCustomerByIdRequest, CustomerDto> getCustomerById() {
-    return request -> customerServiceClient.getCustomerById(request.customerId());
+    return null;
   }
 
   /**
@@ -45,7 +44,7 @@ public class InsuranceFunctions {
   @Bean
   @Description("Get all policies for a given customer ID")
   public Function<GetPoliciesByCustomerIdRequest, List<PolicyDto>> getPoliciesByCustomerId() {
-    return request -> customerServiceClient.getPoliciesByCustomerId(request.customerId());
+    return null;
   }
 
   /**

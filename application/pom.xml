@@ -109,13 +109,17 @@
                 ${project.build.directory}/generated-sources/openapi-spec/api/openapi.yaml
               </inputSpec>
               <generatorName>spring</generatorName>
-              <apiPackage>tech.yildirim.aiinsurance.api.generated.controller</apiPackage>
+              <library>spring-cloud</library>
+              <templateDirectory>${project.basedir}/src/main/resources/openapi-templates</templateDirectory>
+              <apiPackage>tech.yildirim.aiinsurance.api.generated.clients</apiPackage>
               <modelPackage>tech.yildirim.aiinsurance.api.generated.model</modelPackage>
               <configOptions>
                 <useJakartaEe>true</useJakartaEe>
                 <useLombok>true</useLombok>
                 <openApiNullable>false</openApiNullable>
-                <interfaceOnly>true</interfaceOnly>
+                <interfaceOnly>false</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
+                <useTags>true</useTags>
                 <dateLibrary>java8</dateLibrary>
                 <serializableModel>true</serializableModel>
                 <documentationProvider>springdoc</documentationProvider>

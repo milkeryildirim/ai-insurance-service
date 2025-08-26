@@ -1,0 +1,21 @@
+package {{package}};
+
+import org.springframework.cloud.openfeign.FeignClient;
+import {{configPackage}}.ClientConfiguration;
+import {{apiPackage}}.{{baseName}}Api;
+
+{{=[[ ]]=}}
+@FeignClient(
+  name="${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].name:[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]]}",
+  contextId="${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].contextId:${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].name}}",
+  url="${insurance.service.base-url:http://localhost:8080}",
+  configuration = ClientConfiguration.class
+)
+[[={{ }}=]]
+public interface {{baseName}}ApiClient extends {{baseName}}Api {
+{{#operations}}
+  {{#operation}}
+    {{{serviceMethodDeclaration}}}
+  {{/operation}}
+{{/operations}}
+}
