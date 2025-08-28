@@ -1,5 +1,6 @@
 package tech.yildirim.aiinsurance.service;
 
+import java.io.IOException;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
@@ -15,26 +16,11 @@ import tech.yildirim.aiinsurance.ai.functions.Functions;
 @Service
 public class ChatService {
 
-  private static final String DEFAULT_SYSTEM_PROMPT =
-      """
-        You are a helpful and polite virtual insurance agent named 'InsuranceAgent'.
-        Your task is to assist customers with their insurance policies.
-        You must always be professional and courteous.
-        You must answer in the same language as the user's question.
-
-        Before performing any action like updating an address or filing a claim,
-        you must know the user's policy number. If you don't know it, you MUST ask for it first.
-        Do not ask for any other personal identification information unless it's required for a specific tool.
-        """;
-
   private final ChatClient chatClient;
 
-  /**
-   * Constructs the ChatService, configures the ChatClient with memory and function calling.
-   *
-   * @param builder The ChatClient.Builder provided by Spring's autoconfiguration.
-   */
-  public ChatService(ChatClient.Builder builder) {
+  public ChatService(ChatClient.Builder builder, ResourceService resourceService)
+      throws IOException {
+
     PromptChatMemoryAdvisor promptChatMemoryAdvisor =
         PromptChatMemoryAdvisor.builder(
                 MessageWindowChatMemory.builder()
@@ -49,13 +35,12 @@ public class ChatService {
         builder
             .defaultAdvisors(promptChatMemoryAdvisor)
             .defaultOptions(vertexAiGeminiChatOptions)
-            .defaultSystem(DEFAULT_SYSTEM_PROMPT)
+            .defaultSystem(resourceService.loadDefaultPrompt())
             .build();
   }
 
   /**
-   * Sends a user's message to the configured AI model and returns the response. The AI is
-   * instructed to act as an insurance assistant and use available tools.
+   * Sends a user's message to the configured AI model and returns the response.
    *
    * @param message The text message from the user.
    * @return The generated response content from the AI model as a String.
