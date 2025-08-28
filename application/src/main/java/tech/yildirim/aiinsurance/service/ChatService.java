@@ -6,6 +6,7 @@ import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 import org.springframework.stereotype.Service;
+import tech.yildirim.aiinsurance.ai.functions.Functions;
 
 /**
  * Service layer responsible for handling chat interactions with the AI model. This class acts as a
@@ -14,12 +15,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChatService {
 
-  private static final String DEFAULT_SYSTEM_PROMPT = """
+  private static final String DEFAULT_SYSTEM_PROMPT =
+      """
         You are a helpful and polite virtual insurance agent named 'InsuranceAgent'.
         Your task is to assist customers with their insurance policies.
         You must always be professional and courteous.
         You must answer in the same language as the user's question.
-        
+
         Before performing any action like updating an address or filing a claim,
         you must know the user's policy number. If you don't know it, you MUST ask for it first.
         Do not ask for any other personal identification information unless it's required for a specific tool.
@@ -27,6 +29,11 @@ public class ChatService {
 
   private final ChatClient chatClient;
 
+  /**
+   * Constructs the ChatService, configures the ChatClient with memory and function calling.
+   *
+   * @param builder The ChatClient.Builder provided by Spring's autoconfiguration.
+   */
   public ChatService(ChatClient.Builder builder) {
     PromptChatMemoryAdvisor promptChatMemoryAdvisor =
         PromptChatMemoryAdvisor.builder(
@@ -36,7 +43,7 @@ public class ChatService {
                     .build())
             .build();
     VertexAiGeminiChatOptions vertexAiGeminiChatOptions =
-        VertexAiGeminiChatOptions.builder().toolNames(InsuranceFunctions.FUNCTIONS).build();
+        VertexAiGeminiChatOptions.builder().toolNames(Functions.ALL_FUNCTIONS).build();
 
     this.chatClient =
         builder
@@ -47,7 +54,8 @@ public class ChatService {
   }
 
   /**
-   * Sends a user's message to the configured AI model and returns the response.
+   * Sends a user's message to the configured AI model and returns the response. The AI is
+   * instructed to act as an insurance assistant and use available tools.
    *
    * @param message The text message from the user.
    * @return The generated response content from the AI model as a String.

@@ -7,7 +7,7 @@ import {{apiPackage}}.{{baseName}}Api;
 {{=[[ ]]=}}
 @FeignClient(
   name="${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].name:[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]]}",
-  contextId="${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].contextId:${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].name}}",
+  contextId="${apis.[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]].contextId:[[#lambda.lowercase]][[baseName]][[/lambda.lowercase]]}",
   url="${insurance.service.base-url:http://localhost:8080}",
   configuration = ClientConfiguration.class
 )
