@@ -27,7 +27,16 @@ public class HandoffFunctions {
    */
   @Bean(name = Functions.INFORM_HUMAN_OPERATOR)
   @Description(
-      "Use this function ONLY when you cannot fulfill a user's request with any other available tool. This will flag the conversation for a human agent.")
+      "Escalates the conversation to a human operator when AI cannot handle the request. Use this function ONLY when: "
+          + "1) Customer requests something that cannot be fulfilled with available functions, "
+          + "2) Customer asks for complex policy changes, claims processing, or underwriting decisions, "
+          + "3) Customer is frustrated or explicitly asks to speak with a human agent, "
+          + "4) Technical issues prevent you from accessing required information, "
+          + "5) Customer needs assistance with sensitive matters like fraud reporting or legal issues, "
+          + "6) You encounter errors or system limitations that prevent helping the customer. "
+          + "IMPORTANT: This should be your last resort. Always try to help with available functions first. "
+          + "When using this function, provide a clear reason explaining why human intervention is needed. "
+          + "This will create an alert for human operators to take over the conversation.")
   public Function<InformHumanOperatorRequest, String> informHumanOperator() {
     return request -> {
       log.warn("--- HUMAN OPERATOR ALERT ---");

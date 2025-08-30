@@ -2,7 +2,7 @@ package {{package}};
 
 import org.springframework.cloud.openfeign.FeignClient;
 import {{configPackage}}.ClientConfiguration;
-import {{apiPackage}}.{{baseName}}Api;
+import {{apiPackage}}.{{#lambda.titlecase}}{{baseName}}{{/lambda.titlecase}}Api;
 
 {{=[[ ]]=}}
 @FeignClient(
@@ -12,7 +12,7 @@ import {{apiPackage}}.{{baseName}}Api;
   configuration = ClientConfiguration.class
 )
 [[={{ }}=]]
-public interface {{baseName}}ApiClient extends {{baseName}}Api {
+public interface {{#lambda.titlecase}}{{baseName}}{{/lambda.titlecase}}ApiClient extends {{#lambda.titlecase}}{{baseName}}{{/lambda.titlecase}}Api {
 {{#operations}}
   {{#operation}}
     {{{serviceMethodDeclaration}}}

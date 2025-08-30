@@ -1,11 +1,11 @@
 package tech.yildirim.aiinsurance.service;
 
-import java.io.IOException;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.PromptChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
 import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tech.yildirim.aiinsurance.ai.functions.Functions;
 
@@ -18,8 +18,8 @@ public class ChatService {
 
   private final ChatClient chatClient;
 
-  public ChatService(ChatClient.Builder builder, ResourceService resourceService)
-      throws IOException {
+  public ChatService(
+      ChatClient.Builder builder, @Value("${config.default-prompt}") String defaultPrompt) {
 
     PromptChatMemoryAdvisor promptChatMemoryAdvisor =
         PromptChatMemoryAdvisor.builder(
@@ -35,7 +35,7 @@ public class ChatService {
         builder
             .defaultAdvisors(promptChatMemoryAdvisor)
             .defaultOptions(vertexAiGeminiChatOptions)
-            .defaultSystem(resourceService.loadDefaultPrompt())
+            .defaultSystem(defaultPrompt)
             .build();
   }
 

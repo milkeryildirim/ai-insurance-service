@@ -119,7 +119,7 @@
                 <openApiNullable>false</openApiNullable>
                 <interfaceOnly>false</interfaceOnly>
                 <useSpringBoot3>true</useSpringBoot3>
-                <useTags>true</useTags>
+                <useTags>false</useTags>
                 <dateLibrary>java8</dateLibrary>
                 <serializableModel>true</serializableModel>
                 <documentationProvider>springdoc</documentationProvider>
