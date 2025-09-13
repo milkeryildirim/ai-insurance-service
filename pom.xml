@@ -12,7 +12,7 @@
 
   <groupId>tech.yildirim</groupId>
   <artifactId>ai-insurance-parent</artifactId>
-  <version>v0.0.1</version>
+  <version>0.0.2-SNAPSHOT</version>
   <name>ai-insurance-parent</name>
   <description>Parent Project AI-powered insurance assistant</description>
   <packaging>pom</packaging>
@@ -21,7 +21,7 @@
     <java.version>21</java.version>
     <spring-ai.version>1.0.1</spring-ai.version>
     <openapi-maven-generator.version>7.14.0</openapi-maven-generator.version>
-    <dummy-insurance-api-contract.version>0.0.2-SNAPSHOT</dummy-insurance-api-contract.version>
+    <dummy-insurance-api-contract.version>0.0.3-SNAPSHOT</dummy-insurance-api-contract.version>
     <spring-cloud-dependencies.version>2025.0.0</spring-cloud-dependencies.version>
   </properties>
 

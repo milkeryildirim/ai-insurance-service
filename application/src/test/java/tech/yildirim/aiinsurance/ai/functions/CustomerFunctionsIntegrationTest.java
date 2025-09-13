@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tech.yildirim.aiinsurance.ai.functions.CustomerFunctions.GetCustomerByPolicyNumberRequest;
 import tech.yildirim.aiinsurance.ai.functions.CustomerFunctions.GetPoliciesByCustomerIdRequest;
 import tech.yildirim.aiinsurance.api.generated.clients.CustomersApiClient;
 import tech.yildirim.aiinsurance.api.generated.model.CustomerDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
+import tech.yildirim.aiinsurance.config.BaseIntegrationTest;
 
 /**
  * Integration tests for {@link CustomerFunctions}.
@@ -24,9 +24,8 @@ import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
  * application context and can be retrieved by their names.
  */
 @SpringBootTest(classes = {CustomerFunctions.class})
-@ActiveProfiles("test")
 @DisplayName("CustomerFunctions Integration Tests")
-class CustomerFunctionsIntegrationTest {
+class CustomerFunctionsIntegrationTest extends BaseIntegrationTest {
 
   @Autowired private ApplicationContext applicationContext;
 

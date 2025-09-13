@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insurance Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+
+      .auth-section {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      #chat-window {
+        height: 75vh;
+        border: 1px solid #dee2e6;
+        overflow-y: auto;
+        padding: 1rem;
+        background-color: white;
+      }
+
+      .message {
+        margin-bottom: 1rem;
+      }
+
+      .user-message {
+        text-align: right;
+      }
+
+      .user-message .card-body {
+        background-color: #0d6efd;
+        color: white;
+        border-radius: .5rem;
+      }
+
+      .ai-message .card-body {
+        background-color: #e9ecef;
+        border-radius: .5rem;
+      }
+
+      #loading-indicator {
+        display: none;
+      }
+
+      #message-input {
+        border-radius: 20px;
+      }
+
+      #send-button {
+        border-radius: 20px;
+      }
+
+      .loading {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-4">
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <!-- Authentication Section -->
+          <div class="auth-section" th:if="${!authenticated}">
+            <div class="text-center">
+              <h5>Please sign in to use the AI Insurance Assistant</h5>
+              <p class="text-muted">Secure authentication powered by Okta</p>
+              <a href="/login" class="btn btn-primary">Sign In with Okta</a>
+            </div>
+          </div>
+
+          <!-- Authenticated User Section -->
+          <div class="auth-section" th:if="${authenticated}">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="mb-0">Welcome, <span th:text="${name}">User</span>!</h6>
+                <small class="text-muted" th:text="${email}">user@example.com</small>
+              </div>
+              <div>
+                <a href="/profile" class="btn btn-outline-secondary btn-sm me-2">Profile</a>
+                <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Interface (only shown when authenticated) -->
+          <div th:if="${authenticated}">
+            <h2 class="text-center mb-4">AI Insurance Assistant</h2>
+
+            <div id="chat-window" class="card shadow-sm mb-3"></div>
+
+            <div id="loading-indicator" class="text-muted">
+              <i>AI is typing...</i>
+            </div>
+
+            <form id="chat-form" class="d-flex">
+              <input type="text" id="message-input" class="form-control me-2"
+                     placeholder="Ask something about your insurance..." autocomplete="off" required>
+              <button type="submit" id="send-button" class="btn btn-primary">
+                <span class="loading spinner-border spinner-border-sm me-2" role="status"></span>
+                Send
+              </button>
+            </form>
+
+            <div class="text-center mt-2">
+              <small class="text-muted">Powered by AI • Secure • Confidential</small>
+            </div>
+          </div>
+
+          <!-- Fallback for non-authenticated users (static content) -->
+          <div th:unless="${authenticated}">
+            <div class="text-center">
+              <h2 class="mb-4">AI Insurance Assistant</h2>
+              <p class="text-muted">Please sign in to access your personalized insurance assistant.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:if="${authenticated}">
+      const chatForm = document.getElementById('chat-form');
+      const messageInput = document.getElementById('message-input');
+      const chatWindow = document.getElementById('chat-window');
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const sendButton = document.getElementById('send-button');
+      const loadingSpinner = sendButton.querySelector('.loading');
+
+      chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userMessage = messageInput.value.trim();
+        if (!userMessage) {
+          return;
+        }
+
+        appendMessage(userMessage, 'user');
+        messageInput.value = '';
+        setLoading(true);
+
+        try {
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({message: userMessage})
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          appendMessage(data.response, 'ai');
+
+        } catch (error) {
+          console.error('Error:', error);
+          appendMessage('Sorry, something went wrong. Please try again.', 'ai');
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      function setLoading(isLoading) {
+        if (isLoading) {
+          loadingIndicator.style.display = 'block';
+          loadingSpinner.style.display = 'inline-block';
+          sendButton.disabled = true;
+          messageInput.disabled = true;
+        } else {
+          loadingIndicator.style.display = 'none';
+          loadingSpinner.style.display = 'none';
+          sendButton.disabled = false;
+          messageInput.disabled = false;
+          messageInput.focus();
+        }
+      }
+
+      function appendMessage(message, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+
+        const cardDiv = document.createElement('div');
+        cardDiv.classList.add('card', 'd-inline-block');
+
+        const cardBodyDiv = document.createElement('div');
+        cardBodyDiv.classList.add('card-body', 'py-2', 'px-3');
+        cardBodyDiv.textContent = message;
+
+        cardDiv.appendChild(cardBodyDiv);
+        messageDiv.appendChild(cardDiv);
+        chatWindow.appendChild(messageDiv);
+
+        // Scroll to the bottom
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+      }
+
+      // Focus on input when page loads
+      messageInput.focus();
+
+      console.log('AI Insurance Assistant with authentication loaded successfully');
+    </script>
+  </body>
+</html>

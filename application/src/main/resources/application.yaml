@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: ai-insurance
+  security:
+    oauth2:
+      client:
+        registration:
+          okta:
+            client-id: ${OKTA_CLIENT_ID:}
+            client-secret: ${OKTA_CLIENT_SECRET:}
+            scope: openid,profile,email
+        provider:
+          okta:
+            issuer-uri: ${OKTA_ISSUER:}
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID:}
@@ -17,6 +28,14 @@ spring:
           chat:
             options:
               model: gemini-2.5-pro
+
+okta:
+  oauth2:
+    issuer: ${OKTA_ISSUER:}
+    client-id: ${OKTA_CLIENT_ID:}
+    client-secret: ${OKTA_CLIENT_SECRET:}
+    scopes: openid,profile,email
+    redirect-uri: /login/oauth2/code/okta
 
 insurance:
   service:
@@ -238,4 +257,3 @@ config:
     - **CONFIRM** important details before executing destructive operations (delete, update)
 
     Remember: You are not just retrieving information - you are solving problems and providing excellent customer service. Use your functions strategically to create the best possible customer experience, but ONLY after ensuring you have all required data.
-
