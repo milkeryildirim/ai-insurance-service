@@ -127,6 +127,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script th:if="${authenticated}">
+      // Embed welcome message from server-side with proper string escaping
+      const serverWelcomeMessage = "[[${welcomeMessage}]]";
+
       const chatForm = document.getElementById('chat-form');
       const messageInput = document.getElementById('message-input');
       const chatWindow = document.getElementById('chat-window');
@@ -205,6 +208,21 @@
 
       // Focus on input when page loads
       messageInput.focus();
+
+      // Load welcome message when page loads
+      loadWelcomeMessage();
+
+      function loadWelcomeMessage() {
+        console.log('Welcome message from server:', serverWelcomeMessage);
+        console.log('Type of welcome message:', typeof serverWelcomeMessage);
+        if (serverWelcomeMessage && typeof serverWelcomeMessage === 'string'
+            && serverWelcomeMessage.trim() !== '') {
+          appendMessage(serverWelcomeMessage, 'ai');
+          console.log('Welcome message displayed');
+        } else {
+          console.log('No welcome message to display');
+        }
+      }
 
       console.log('AI Insurance Assistant with authentication loaded successfully');
     </script>
