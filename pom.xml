@@ -12,7 +12,7 @@
 
   <groupId>tech.yildirim</groupId>
   <artifactId>ai-insurance-parent</artifactId>
-  <version>0.0.2</version>
+  <version>0.0.3-SNAPSHOT</version>
   <name>ai-insurance-parent</name>
   <description>Parent Project AI-powered insurance assistant</description>
   <packaging>pom</packaging>
