@@ -8,10 +8,29 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Description;
 import tech.yildirim.aiinsurance.api.generated.clients.ClaimsApiClient;
-import tech.yildirim.aiinsurance.api.generated.model.AssignAdjusterRequestDto;
 import tech.yildirim.aiinsurance.api.generated.model.AutoClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HealthClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HomeClaimDto;
+import tech.yildirim.aiinsurance.model.ResponseWrapper;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllAutoClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllHealthClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllHomeClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAutoClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHealthClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHomeClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateHomeClaimReq;
+import tech.yildirim.aiinsurance.security.SecuredAI;
 
 /** Defines all AI-callable functions related to claim management. */
 @Configuration
@@ -21,53 +40,10 @@ public class ClaimFunctions {
 
   private final ClaimsApiClient claimsApiClient;
 
-  // --- Request Records for Type Safety ---
-
-  // Auto Claim Records
-  public record CreateAutoClaimRequest(AutoClaimDto autoClaimDto) {}
-
-  public record GetAutoClaimByIdRequest(Long claimId) {}
-
-  public record GetAllAutoClaimsRequest(Integer page, Integer size, String status) {}
-
-  public record UpdateAutoClaimRequest(Long claimId, AutoClaimDto autoClaimDto) {}
-
-  public record DeleteAutoClaimRequest(Long claimId) {}
-
-  public record AssignAdjusterToAutoClaimRequest(
-      Long claimId, AssignAdjusterRequestDto assignAdjusterRequestDto) {}
-
-  // Home Claim Records
-  public record CreateHomeClaimRequest(HomeClaimDto homeClaimDto) {}
-
-  public record GetHomeClaimByIdRequest(Long claimId) {}
-
-  public record GetAllHomeClaimsRequest(Integer page, Integer size, String status) {}
-
-  public record UpdateHomeClaimRequest(Long claimId, HomeClaimDto homeClaimDto) {}
-
-  public record DeleteHomeClaimRequest(Long claimId) {}
-
-  public record AssignAdjusterToHomeClaimRequest(
-      Long claimId, AssignAdjusterRequestDto assignAdjusterRequestDto) {}
-
-  // Health Claim Records
-  public record CreateHealthClaimRequest(HealthClaimDto healthClaimDto) {}
-
-  public record GetHealthClaimByIdRequest(Long claimId) {}
-
-  public record GetAllHealthClaimsRequest(Integer page, Integer size, String status) {}
-
-  public record UpdateHealthClaimRequest(Long claimId, HealthClaimDto healthClaimDto) {}
-
-  public record DeleteHealthClaimRequest(Long claimId) {}
-
-  public record AssignAdjusterToHealthClaimRequest(
-      Long claimId, AssignAdjusterRequestDto assignAdjusterRequestDto) {}
-
   // --- AUTO CLAIM FUNCTIONS ---
 
   @Bean(Functions.CREATE_AUTO_CLAIM)
+  @SecuredAI
   @Description(
       "Creates a new auto insurance claim for vehicle accidents or damages. Use this function when: "
           + "1) Customer reports a car accident, collision, or vehicle damage, "
@@ -78,12 +54,18 @@ public class ClaimFunctions {
           + "CRITICAL: Use the technical policy ID (Long number) for policyId field, NOT the policy number (string like POL-12345). "
           + "Set: claimType='AutoClaimDto', policyId=<technical_policy_id_number>, description, dateOfIncident, licensePlate, and optional fields like vehicleVin, accidentLocation, estimatedAmount. "
           + "Returns the created auto claim with assigned claim ID and initial status.")
-  public Function<CreateAutoClaimRequest, AutoClaimDto> createAutoClaim() {
+  public Function<CreateAutoClaimReq, ResponseWrapper<AutoClaimDto>> createAutoClaim() {
     return request ->
-        Objects.requireNonNull(claimsApiClient.createAutoClaim(request.autoClaimDto()).getBody());
+        ResponseWrapper.<AutoClaimDto>builder()
+            .success(true)
+            .data(
+                Objects.requireNonNull(
+                    claimsApiClient.createAutoClaim(request.autoClaimDto()).getBody()))
+            .build();
   }
 
   @Bean(Functions.GET_AUTO_CLAIM_BY_ID)
+  @SecuredAI
   @Description(
       "Retrieves detailed auto claim information using the unique claim ID. Use this function when: "
           + "1) Customer provides their auto claim number or ID, "
@@ -91,12 +73,16 @@ public class ClaimFunctions {
           + "3) You need to review specific auto claim details during conversation, "
           + "4) Following up on previously discussed auto claims. "
           + "Returns complete auto claim details including status, vehicle information, damages, and adjuster assignment.")
-  public Function<GetAutoClaimByIdRequest, AutoClaimDto> getAutoClaimById() {
+  public Function<GetAutoClaimByIdReq, ResponseWrapper<AutoClaimDto>> getAutoClaimById() {
     return request ->
-        Objects.requireNonNull(claimsApiClient.getAutoClaimById(request.claimId()).getBody());
+        ResponseWrapper.<AutoClaimDto>builder()
+            .success(true)
+            .data(claimsApiClient.getAutoClaimById(request.claimId()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_ALL_AUTO_CLAIMS)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Retrieves all auto claims in the system with optional filtering and pagination. Use this function when: "
           + "1) Administrative users need to view all auto claims, "
@@ -104,15 +90,19 @@ public class ClaimFunctions {
           + "3) You need to find claims with specific status like 'PENDING', 'APPROVED', 'REJECTED', "
           + "4) Generating reports or reviewing multiple auto claims. "
           + "Supports pagination (page, size) and status filtering. Returns list of auto claims matching criteria.")
-  public Function<GetAllAutoClaimsRequest, List<AutoClaimDto>> getAllAutoClaims() {
+  public Function<GetAllAutoClaimsReq, ResponseWrapper<List<AutoClaimDto>>> getAllAutoClaims() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .getAllAutoClaims(request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<AutoClaimDto>>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .getAllAutoClaims(request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.UPDATE_AUTO_CLAIM)
+  @SecuredAI
   @Description(
       "Updates existing auto claim information. Use this function when: "
           + "1) Customer provides additional information about the auto accident or damage, "
@@ -121,13 +111,19 @@ public class ClaimFunctions {
           + "4) Correction of auto claim information is needed, "
           + "5) Processing workflow requires claim updates. "
           + "Requires claim ID and updated auto claim object. Returns the updated claim with modifications applied.")
-  public Function<UpdateAutoClaimRequest, AutoClaimDto> updateAutoClaim() {
+  public Function<UpdateAutoClaimReq, ResponseWrapper<AutoClaimDto>> updateAutoClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient.updateAutoClaim(request.claimId(), request.autoClaimDto()).getBody());
+        ResponseWrapper.<AutoClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .updateAutoClaim(request.claimId(), request.autoClaimDto())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.DELETE_AUTO_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Permanently deletes an auto claim from the system. Use this function ONLY when: "
           + "1) Customer explicitly requests auto claim cancellation or withdrawal, "
@@ -136,14 +132,18 @@ public class ClaimFunctions {
           + "4) Legal or compliance requirements mandate claim removal. "
           + "WARNING: This action is irreversible. Always confirm with customer before executing. "
           + "Consider business rules and data retention policies before deletion.")
-  public Function<DeleteAutoClaimRequest, String> deleteAutoClaim() {
+  public Function<DeleteAutoClaimReq, ResponseWrapper<String>> deleteAutoClaim() {
     return request -> {
       claimsApiClient.deleteAutoClaim(request.claimId());
-      return "{\"status\": \"SUCCESS\", \"message\": \"Auto claim deleted successfully.\"}";
+      return ResponseWrapper.<String>builder()
+          .success(true)
+          .data("Auto claim deleted successfully.")
+          .build();
     };
   }
 
   @Bean(Functions.ASSIGN_ADJUSTER_TO_AUTO_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Assigns an insurance adjuster to an auto claim for investigation and assessment. Use this function when: "
           + "1) Auto claim requires professional assessment and investigation, "
@@ -152,17 +152,23 @@ public class ClaimFunctions {
           + "4) Complex auto claims need expert evaluation. "
           + "Requires claim ID and adjuster assignment details. "
           + "Returns updated auto claim with assigned adjuster information and contact details.")
-  public Function<AssignAdjusterToAutoClaimRequest, AutoClaimDto> assignAdjusterToAutoClaim() {
+  public Function<AssignAdjusterToAutoClaimReq, ResponseWrapper<AutoClaimDto>>
+      assignAdjusterToAutoClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .assignAdjusterToAutoClaim(request.claimId(), request.assignAdjusterRequestDto())
-                .getBody());
+        ResponseWrapper.<AutoClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .assignAdjusterToAutoClaim(
+                        request.claimId(), request.assignAdjusterRequestDto())
+                    .getBody())
+            .build();
   }
 
   // --- HOME CLAIM FUNCTIONS ---
 
   @Bean(Functions.CREATE_HOME_CLAIM)
+  @SecuredAI
   @Description(
       "Creates a new home insurance claim for property damage or loss. Use this function when: "
           + "1) Customer reports home damage from fire, water, storm, or other covered perils, "
@@ -173,12 +179,16 @@ public class ClaimFunctions {
           + "CRITICAL: Use the technical policy ID (Long number) for policyId field, NOT the policy number (string like POL-12345). "
           + "Set: claimType='HomeClaimDto', policyId=<technical_policy_id_number>, description, dateOfIncident, and optional fields like typeOfDamage, damagedItems, estimatedAmount. "
           + "Returns the created home claim with assigned claim ID and initial status.")
-  public Function<CreateHomeClaimRequest, HomeClaimDto> createHomeClaim() {
+  public Function<CreateHomeClaimReq, ResponseWrapper<HomeClaimDto>> createHomeClaim() {
     return request ->
-        Objects.requireNonNull(claimsApiClient.createHomeClaim(request.homeClaimDto()).getBody());
+        ResponseWrapper.<HomeClaimDto>builder()
+            .success(true)
+            .data(claimsApiClient.createHomeClaim(request.homeClaimDto()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_HOME_CLAIM_BY_ID)
+  @SecuredAI
   @Description(
       "Retrieves detailed home claim information using the unique claim ID. Use this function when: "
           + "1) Customer provides their home claim number or ID, "
@@ -186,12 +196,16 @@ public class ClaimFunctions {
           + "3) You need to review specific home claim details during conversation, "
           + "4) Following up on previously discussed home claims. "
           + "Returns complete home claim details including status, property information, damages, and adjuster assignment.")
-  public Function<GetHomeClaimByIdRequest, HomeClaimDto> getHomeClaimById() {
+  public Function<GetHomeClaimByIdReq, ResponseWrapper<HomeClaimDto>> getHomeClaimById() {
     return request ->
-        Objects.requireNonNull(claimsApiClient.getHomeClaimById(request.claimId()).getBody());
+        ResponseWrapper.<HomeClaimDto>builder()
+            .success(true)
+            .data(claimsApiClient.getHomeClaimById(request.claimId()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_ALL_HOME_CLAIMS)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Retrieves all home claims in the system with optional filtering and pagination. Use this function when: "
           + "1) Administrative users need to view all home claims, "
@@ -199,15 +213,19 @@ public class ClaimFunctions {
           + "3) You need to find claims with specific status like 'PENDING', 'APPROVED', 'REJECTED', "
           + "4) Generating reports or reviewing multiple home claims. "
           + "Supports pagination (page, size) and status filtering. Returns list of home claims matching criteria.")
-  public Function<GetAllHomeClaimsRequest, List<HomeClaimDto>> getAllHomeClaims() {
+  public Function<GetAllHomeClaimsReq, ResponseWrapper<List<HomeClaimDto>>> getAllHomeClaims() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .getAllHomeClaims(request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<HomeClaimDto>>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .getAllHomeClaims(request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.UPDATE_HOME_CLAIM)
+  @SecuredAI
   @Description(
       "Updates existing home claim information. Use this function when: "
           + "1) Customer provides additional information about the property damage, "
@@ -216,13 +234,19 @@ public class ClaimFunctions {
           + "4) Correction of home claim information is needed, "
           + "5) Processing workflow requires claim updates. "
           + "Requires claim ID and updated home claim object. Returns the updated claim with modifications applied.")
-  public Function<UpdateHomeClaimRequest, HomeClaimDto> updateHomeClaim() {
+  public Function<UpdateHomeClaimReq, ResponseWrapper<HomeClaimDto>> updateHomeClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient.updateHomeClaim(request.claimId(), request.homeClaimDto()).getBody());
+        ResponseWrapper.<HomeClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .updateHomeClaim(request.claimId(), request.homeClaimDto())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.DELETE_HOME_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Permanently deletes a home claim from the system. Use this function ONLY when: "
           + "1) Customer explicitly requests home claim cancellation or withdrawal, "
@@ -231,14 +255,18 @@ public class ClaimFunctions {
           + "4) Legal or compliance requirements mandate claim removal. "
           + "WARNING: This action is irreversible. Always confirm with customer before executing. "
           + "Consider business rules and data retention policies before deletion.")
-  public Function<DeleteHomeClaimRequest, String> deleteHomeClaim() {
+  public Function<DeleteHomeClaimReq, ResponseWrapper<String>> deleteHomeClaim() {
     return request -> {
       claimsApiClient.deleteHomeClaim(request.claimId());
-      return "{\"status\": \"SUCCESS\", \"message\": \"Home claim deleted successfully.\"}";
+      return ResponseWrapper.<String>builder()
+          .success(true)
+          .data("Home claim deleted successfully.")
+          .build();
     };
   }
 
   @Bean(Functions.ASSIGN_ADJUSTER_TO_HOME_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Assigns an insurance adjuster to a home claim for investigation and assessment. Use this function when: "
           + "1) Home claim requires professional assessment and investigation, "
@@ -247,17 +275,23 @@ public class ClaimFunctions {
           + "4) Complex home claims need expert evaluation. "
           + "Requires claim ID and adjuster assignment details. "
           + "Returns updated home claim with assigned adjuster information and contact details.")
-  public Function<AssignAdjusterToHomeClaimRequest, HomeClaimDto> assignAdjusterToHomeClaim() {
+  public Function<AssignAdjusterToHomeClaimReq, ResponseWrapper<HomeClaimDto>>
+      assignAdjusterToHomeClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .assignAdjusterToHomeClaim(request.claimId(), request.assignAdjusterRequestDto())
-                .getBody());
+        ResponseWrapper.<HomeClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .assignAdjusterToHomeClaim(
+                        request.claimId(), request.assignAdjusterRequestDto())
+                    .getBody())
+            .build();
   }
 
   // --- HEALTH CLAIM FUNCTIONS ---
 
   @Bean(Functions.CREATE_HEALTH_CLAIM)
+  @SecuredAI
   @Description(
       "Creates a new health insurance claim for medical expenses or treatments. Use this function when: "
           + "1) Customer needs to file a medical expense claim or reimbursement request, "
@@ -268,13 +302,16 @@ public class ClaimFunctions {
           + "CRITICAL: Use the technical policy ID (Long number) for policyId field, NOT the policy number (string like POL-12345). "
           + "Set: claimType='HealthClaimDto', policyId=<technical_policy_id_number>, description, dateOfIncident, and optional fields like medicalProvider, procedureCode, estimatedAmount. "
           + "Returns the created health claim with assigned claim ID and initial status.")
-  public Function<CreateHealthClaimRequest, HealthClaimDto> createHealthClaim() {
+  public Function<CreateHealthClaimReq, ResponseWrapper<HealthClaimDto>> createHealthClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient.createHealthClaim(request.healthClaimDto()).getBody());
+        ResponseWrapper.<HealthClaimDto>builder()
+            .success(true)
+            .data(claimsApiClient.createHealthClaim(request.healthClaimDto()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_HEALTH_CLAIM_BY_ID)
+  @SecuredAI
   @Description(
       "Retrieves detailed health claim information using the unique claim ID. Use this function when: "
           + "1) Customer provides their health claim number or ID, "
@@ -282,12 +319,16 @@ public class ClaimFunctions {
           + "3) You need to review specific health claim details during conversation, "
           + "4) Following up on previously discussed health claims. "
           + "Returns complete health claim details including status, medical provider, treatment information, and reimbursement status.")
-  public Function<GetHealthClaimByIdRequest, HealthClaimDto> getHealthClaimById() {
+  public Function<GetHealthClaimByIdReq, ResponseWrapper<HealthClaimDto>> getHealthClaimById() {
     return request ->
-        Objects.requireNonNull(claimsApiClient.getHealthClaimById(request.claimId()).getBody());
+        ResponseWrapper.<HealthClaimDto>builder()
+            .success(true)
+            .data(claimsApiClient.getHealthClaimById(request.claimId()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_ALL_HEALTH_CLAIMS)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Retrieves all health claims in the system with optional filtering and pagination. Use this function when: "
           + "1) Administrative users need to view all health claims, "
@@ -295,15 +336,20 @@ public class ClaimFunctions {
           + "3) You need to find claims with specific status like 'PENDING', 'APPROVED', 'REJECTED', "
           + "4) Generating reports or reviewing multiple health claims. "
           + "Supports pagination (page, size) and status filtering. Returns list of health claims matching criteria.")
-  public Function<GetAllHealthClaimsRequest, List<HealthClaimDto>> getAllHealthClaims() {
+  public Function<GetAllHealthClaimsReq, ResponseWrapper<List<HealthClaimDto>>>
+      getAllHealthClaims() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .getAllHealthClaims(request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<HealthClaimDto>>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .getAllHealthClaims(request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.UPDATE_HEALTH_CLAIM)
+  @SecuredAI
   @Description(
       "Updates existing health claim information. Use this function when: "
           + "1) Customer provides additional medical documentation or information, "
@@ -312,15 +358,19 @@ public class ClaimFunctions {
           + "4) Correction of health claim information is needed, "
           + "5) Processing workflow requires claim updates. "
           + "Requires claim ID and updated health claim object. Returns the updated claim with modifications applied.")
-  public Function<UpdateHealthClaimRequest, HealthClaimDto> updateHealthClaim() {
+  public Function<UpdateHealthClaimReq, ResponseWrapper<HealthClaimDto>> updateHealthClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .updateHealthClaim(request.claimId(), request.healthClaimDto())
-                .getBody());
+        ResponseWrapper.<HealthClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .updateHealthClaim(request.claimId(), request.healthClaimDto())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.DELETE_HEALTH_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Permanently deletes a health claim from the system. Use this function ONLY when: "
           + "1) Customer explicitly requests health claim cancellation or withdrawal, "
@@ -329,14 +379,18 @@ public class ClaimFunctions {
           + "4) Legal or compliance requirements mandate claim removal. "
           + "WARNING: This action is irreversible. Always confirm with customer before executing. "
           + "Consider business rules and data retention policies before deletion.")
-  public Function<DeleteHealthClaimRequest, String> deleteHealthClaim() {
+  public Function<DeleteHealthClaimReq, ResponseWrapper<String>> deleteHealthClaim() {
     return request -> {
       claimsApiClient.deleteHealthClaim(request.claimId());
-      return "{\"status\": \"SUCCESS\", \"message\": \"Health claim deleted successfully.\"}";
+      return ResponseWrapper.<String>builder()
+          .success(true)
+          .data("Health claim deleted successfully.")
+          .build();
     };
   }
 
   @Bean(Functions.ASSIGN_ADJUSTER_TO_HEALTH_CLAIM)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Assigns an insurance adjuster to a health claim for investigation and assessment. Use this function when: "
           + "1) Health claim requires professional assessment and investigation, "
@@ -345,12 +399,16 @@ public class ClaimFunctions {
           + "4) Complex health claims need expert medical evaluation. "
           + "Requires claim ID and adjuster assignment details. "
           + "Returns updated health claim with assigned adjuster information and contact details.")
-  public Function<AssignAdjusterToHealthClaimRequest, HealthClaimDto>
+  public Function<AssignAdjusterToHealthClaimReq, ResponseWrapper<HealthClaimDto>>
       assignAdjusterToHealthClaim() {
     return request ->
-        Objects.requireNonNull(
-            claimsApiClient
-                .assignAdjusterToHealthClaim(request.claimId(), request.assignAdjusterRequestDto())
-                .getBody());
+        ResponseWrapper.<HealthClaimDto>builder()
+            .success(true)
+            .data(
+                claimsApiClient
+                    .assignAdjusterToHealthClaim(
+                        request.claimId(), request.assignAdjusterRequestDto())
+                    .getBody())
+            .build();
   }
 }

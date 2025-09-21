@@ -16,16 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.CreatePolicyRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetAllPoliciesRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetAutoClaimsByPolicyIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetHealthClaimsByPolicyIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetHomeClaimsByPolicyIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetPolicyByIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetPolicyByPolicyNumberRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.GetPolicyConditionsRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.UpdatePolicyConditionsRequest;
-import tech.yildirim.aiinsurance.ai.functions.PolicyFunctions.UpdatePolicyRequest;
 import tech.yildirim.aiinsurance.api.generated.clients.PoliciesApiClient;
 import tech.yildirim.aiinsurance.api.generated.model.AutoClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.CancellationPenaltyRuleDto;
@@ -33,6 +23,17 @@ import tech.yildirim.aiinsurance.api.generated.model.HealthClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HomeClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyConditionsDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
+import tech.yildirim.aiinsurance.model.ResponseWrapper;
+import tech.yildirim.aiinsurance.model.ai.request.CreatePolicyReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllPoliciesReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAutoClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHealthClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHomeClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyByPolicyNumberReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyConditionsReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdatePolicyConditionsReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdatePolicyReq;
 
 /**
  * Unit tests for {@link PolicyFunctions}.
@@ -64,14 +65,14 @@ class PolicyFunctionsTest {
     when(policiesApiClient.createPolicy(inputPolicy)).thenReturn(ResponseEntity.ok(expectedPolicy));
 
     // When
-    Function<CreatePolicyRequest, PolicyDto> function = policyFunctions.createPolicy();
-    PolicyDto result = function.apply(new CreatePolicyRequest(inputPolicy));
+    Function<CreatePolicyReq, ResponseWrapper<PolicyDto>> function = policyFunctions.createPolicy();
+    ResponseWrapper<PolicyDto> result = function.apply(new CreatePolicyReq(inputPolicy));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(1L);
-    assertThat(result.getPolicyNumber()).isEqualTo("POL-2024-001");
-    assertThat(result.getType()).isEqualTo(PolicyDto.TypeEnum.AUTO);
+    assertThat(result.getData().getId()).isEqualTo(1L);
+    assertThat(result.getData().getPolicyNumber()).isEqualTo("POL-2024-001");
+    assertThat(result.getData().getType()).isEqualTo(PolicyDto.TypeEnum.AUTO);
     verify(policiesApiClient).createPolicy(inputPolicy);
   }
 
@@ -83,8 +84,8 @@ class PolicyFunctionsTest {
     when(policiesApiClient.createPolicy(inputPolicy)).thenReturn(ResponseEntity.ok(null));
 
     // When & Then
-    Function<CreatePolicyRequest, PolicyDto> function = policyFunctions.createPolicy();
-    CreatePolicyRequest request = new CreatePolicyRequest(inputPolicy);
+    Function<CreatePolicyReq, ResponseWrapper<PolicyDto>> function = policyFunctions.createPolicy();
+    CreatePolicyReq request = new CreatePolicyReq(inputPolicy);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -100,13 +101,14 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getPolicyById(policyId)).thenReturn(ResponseEntity.ok(expectedPolicy));
 
     // When
-    Function<GetPolicyByIdRequest, PolicyDto> function = policyFunctions.getPolicyById();
-    PolicyDto result = function.apply(new GetPolicyByIdRequest(policyId));
+    Function<GetPolicyByIdReq, ResponseWrapper<PolicyDto>> function =
+        policyFunctions.getPolicyById();
+    ResponseWrapper<PolicyDto> result = function.apply(new GetPolicyByIdReq(policyId));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(policyId);
-    assertThat(result.getPolicyNumber()).isEqualTo("POL-2024-001");
+    assertThat(result.getData().getId()).isEqualTo(policyId);
+    assertThat(result.getData().getPolicyNumber()).isEqualTo("POL-2024-001");
     verify(policiesApiClient).getPolicyById(policyId);
   }
 
@@ -118,8 +120,9 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getPolicyById(policyId)).thenReturn(ResponseEntity.ok(null));
 
     // When & Then
-    Function<GetPolicyByIdRequest, PolicyDto> function = policyFunctions.getPolicyById();
-    GetPolicyByIdRequest request = new GetPolicyByIdRequest(policyId);
+    Function<GetPolicyByIdReq, ResponseWrapper<PolicyDto>> function =
+        policyFunctions.getPolicyById();
+    GetPolicyByIdReq request = new GetPolicyByIdReq(policyId);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -136,13 +139,14 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedPolicy));
 
     // When
-    Function<GetPolicyByPolicyNumberRequest, PolicyDto> function =
+    Function<GetPolicyByPolicyNumberReq, ResponseWrapper<PolicyDto>> function =
         policyFunctions.getPolicyByPolicyNumber();
-    PolicyDto result = function.apply(new GetPolicyByPolicyNumberRequest(policyNumber));
+    ResponseWrapper<PolicyDto> result =
+        function.apply(new GetPolicyByPolicyNumberReq(policyNumber));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getPolicyNumber()).isEqualTo(policyNumber);
+    assertThat(result.getData().getPolicyNumber()).isEqualTo(policyNumber);
     verify(policiesApiClient).getPolicyByPolicyNumber(policyNumber);
   }
 
@@ -155,14 +159,16 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getAllPolicies()).thenReturn(ResponseEntity.ok(expectedPolicies));
 
     // When
-    Function<GetAllPoliciesRequest, List<PolicyDto>> function = policyFunctions.getAllPolicies();
-    List<PolicyDto> result = function.apply(new GetAllPoliciesRequest());
+    Function<GetAllPoliciesReq, ResponseWrapper<List<PolicyDto>>> function =
+        policyFunctions.getAllPolicies();
+    ResponseWrapper<List<PolicyDto>> result = function.apply(new GetAllPoliciesReq());
 
     // Then
-    assertThat(result).isNotNull().hasSize(3);
-    assertThat(result.get(0).getType()).isEqualTo(PolicyDto.TypeEnum.AUTO);
-    assertThat(result.get(1).getType()).isEqualTo(PolicyDto.TypeEnum.HOME);
-    assertThat(result.get(2).getType()).isEqualTo(PolicyDto.TypeEnum.HEALTH);
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).hasSize(3);
+    assertThat(result.getData().get(0).getType()).isEqualTo(PolicyDto.TypeEnum.AUTO);
+    assertThat(result.getData().get(1).getType()).isEqualTo(PolicyDto.TypeEnum.HOME);
+    assertThat(result.getData().get(2).getType()).isEqualTo(PolicyDto.TypeEnum.HEALTH);
     verify(policiesApiClient).getAllPolicies();
   }
 
@@ -175,11 +181,13 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getAllPolicies()).thenReturn(ResponseEntity.ok(emptyPolicies));
 
     // When
-    Function<GetAllPoliciesRequest, List<PolicyDto>> function = policyFunctions.getAllPolicies();
-    List<PolicyDto> result = function.apply(new GetAllPoliciesRequest());
+    Function<GetAllPoliciesReq, ResponseWrapper<List<PolicyDto>>> function =
+        policyFunctions.getAllPolicies();
+    ResponseWrapper<List<PolicyDto>> result = function.apply(new GetAllPoliciesReq());
 
     // Then
-    assertThat(result).isNotNull().isEmpty();
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).isEmpty();
     verify(policiesApiClient).getAllPolicies();
   }
 
@@ -197,13 +205,13 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedPolicy));
 
     // When
-    Function<UpdatePolicyRequest, PolicyDto> function = policyFunctions.updatePolicy();
-    PolicyDto result = function.apply(new UpdatePolicyRequest(policyId, inputPolicy));
+    Function<UpdatePolicyReq, ResponseWrapper<PolicyDto>> function = policyFunctions.updatePolicy();
+    ResponseWrapper<PolicyDto> result = function.apply(new UpdatePolicyReq(policyId, inputPolicy));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(policyId);
-    assertThat(result.getPremium()).isEqualTo(new BigDecimal("1500.00"));
+    assertThat(result.getData().getId()).isEqualTo(policyId);
+    assertThat(result.getData().getPremium()).isEqualTo(new BigDecimal("1500.00"));
     verify(policiesApiClient).updatePolicy(policyId, inputPolicy);
   }
 
@@ -221,15 +229,16 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetAutoClaimsByPolicyIdRequest, List<AutoClaimDto>> function =
+    Function<GetAutoClaimsByPolicyIdReq, ResponseWrapper<List<AutoClaimDto>>> function =
         policyFunctions.getAutoClaimsByPolicyId();
-    List<AutoClaimDto> result =
-        function.apply(new GetAutoClaimsByPolicyIdRequest(policyId, page, size, status));
+    ResponseWrapper<List<AutoClaimDto>> result =
+        function.apply(new GetAutoClaimsByPolicyIdReq(policyId, page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getLicensePlate()).isEqualTo("ABC-123");
-    assertThat(result.get(1).getLicensePlate()).isEqualTo("XYZ-789");
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).hasSize(2);
+    assertThat(result.getData().get(0).getLicensePlate()).isEqualTo("ABC-123");
+    assertThat(result.getData().get(1).getLicensePlate()).isEqualTo("XYZ-789");
     verify(policiesApiClient).getAutoClaimsByPolicyId(policyId, page, size, status);
   }
 
@@ -247,15 +256,16 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetHomeClaimsByPolicyIdRequest, List<HomeClaimDto>> function =
+    Function<GetHomeClaimsByPolicyIdReq, ResponseWrapper<List<HomeClaimDto>>> function =
         policyFunctions.getHomeClaimsByPolicyId();
-    List<HomeClaimDto> result =
-        function.apply(new GetHomeClaimsByPolicyIdRequest(policyId, page, size, status));
+    ResponseWrapper<List<HomeClaimDto>> result =
+        function.apply(new GetHomeClaimsByPolicyIdReq(policyId, page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getTypeOfDamage()).isEqualTo("Fire damage");
-    assertThat(result.get(1).getTypeOfDamage()).isEqualTo("Water damage");
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).hasSize(2);
+    assertThat(result.getData().get(0).getTypeOfDamage()).isEqualTo("Fire damage");
+    assertThat(result.getData().get(1).getTypeOfDamage()).isEqualTo("Water damage");
     verify(policiesApiClient).getHomeClaimsByPolicyId(policyId, page, size, status);
   }
 
@@ -273,15 +283,16 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetHealthClaimsByPolicyIdRequest, List<HealthClaimDto>> function =
+    Function<GetHealthClaimsByPolicyIdReq, ResponseWrapper<List<HealthClaimDto>>> function =
         policyFunctions.getHealthClaimsByPolicyId();
-    List<HealthClaimDto> result =
-        function.apply(new GetHealthClaimsByPolicyIdRequest(policyId, page, size, status));
+    ResponseWrapper<List<HealthClaimDto>> result =
+        function.apply(new GetHealthClaimsByPolicyIdReq(policyId, page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getMedicalProvider()).isEqualTo("City General Hospital");
-    assertThat(result.get(1).getMedicalProvider()).isEqualTo("Family Care Clinic");
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).hasSize(2);
+    assertThat(result.getData().get(0).getMedicalProvider()).isEqualTo("City General Hospital");
+    assertThat(result.getData().get(1).getMedicalProvider()).isEqualTo("Family Care Clinic");
     verify(policiesApiClient).getHealthClaimsByPolicyId(policyId, page, size, status);
   }
 
@@ -294,15 +305,15 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getPolicyConditions()).thenReturn(ResponseEntity.ok(expectedConditions));
 
     // When
-    Function<GetPolicyConditionsRequest, PolicyConditionsDto> function =
+    Function<GetPolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>> function =
         policyFunctions.getPolicyConditions();
-    PolicyConditionsDto result = function.apply(new GetPolicyConditionsRequest());
+    ResponseWrapper<PolicyConditionsDto> result = function.apply(new GetPolicyConditionsReq());
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getFreeCancellationDays()).isEqualTo(14);
-    assertThat(result.getNoClaimBonusPercentage()).isEqualTo(new BigDecimal("0.05"));
-    assertThat(result.getCancellationRules()).hasSize(1);
+    assertThat(result.getData().getFreeCancellationDays()).isEqualTo(14);
+    assertThat(result.getData().getNoClaimBonusPercentage()).isEqualTo(new BigDecimal("0.05"));
+    assertThat(result.getData().getCancellationRules()).hasSize(1);
     verify(policiesApiClient).getPolicyConditions();
   }
 
@@ -313,9 +324,9 @@ class PolicyFunctionsTest {
     when(policiesApiClient.getPolicyConditions()).thenReturn(ResponseEntity.ok(null));
 
     // When & Then
-    Function<GetPolicyConditionsRequest, PolicyConditionsDto> function =
+    Function<GetPolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>> function =
         policyFunctions.getPolicyConditions();
-    GetPolicyConditionsRequest request = new GetPolicyConditionsRequest();
+    GetPolicyConditionsReq request = new GetPolicyConditionsReq();
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -332,14 +343,15 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedConditions));
 
     // When
-    Function<UpdatePolicyConditionsRequest, PolicyConditionsDto> function =
+    Function<UpdatePolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>> function =
         policyFunctions.updatePolicyConditions();
-    PolicyConditionsDto result = function.apply(new UpdatePolicyConditionsRequest(inputConditions));
+    ResponseWrapper<PolicyConditionsDto> result =
+        function.apply(new UpdatePolicyConditionsReq(inputConditions));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getFreeCancellationDays()).isEqualTo(7);
-    assertThat(result.getNoClaimBonusPercentage()).isEqualTo(new BigDecimal("0.05"));
+    assertThat(result.getData().getFreeCancellationDays()).isEqualTo(7);
+    assertThat(result.getData().getNoClaimBonusPercentage()).isEqualTo(new BigDecimal("0.05"));
     verify(policiesApiClient).updatePolicyConditions(inputConditions);
   }
 
@@ -352,9 +364,9 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(null));
 
     // When & Then
-    Function<UpdatePolicyConditionsRequest, PolicyConditionsDto> function =
+    Function<UpdatePolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>> function =
         policyFunctions.updatePolicyConditions();
-    UpdatePolicyConditionsRequest request = new UpdatePolicyConditionsRequest(inputConditions);
+    UpdatePolicyConditionsReq request = new UpdatePolicyConditionsReq(inputConditions);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -373,13 +385,14 @@ class PolicyFunctionsTest {
         .thenReturn(ResponseEntity.ok(emptyClaims));
 
     // When
-    Function<GetAutoClaimsByPolicyIdRequest, List<AutoClaimDto>> function =
+    Function<GetAutoClaimsByPolicyIdReq, ResponseWrapper<List<AutoClaimDto>>> function =
         policyFunctions.getAutoClaimsByPolicyId();
-    List<AutoClaimDto> result =
-        function.apply(new GetAutoClaimsByPolicyIdRequest(policyId, page, size, status));
+    ResponseWrapper<List<AutoClaimDto>> result =
+        function.apply(new GetAutoClaimsByPolicyIdReq(policyId, page, size, status));
 
     // Then
-    assertThat(result).isNotNull().isEmpty();
+    assertThat(result).isNotNull();
+    assertThat(result.getData()).isEmpty();
     verify(policiesApiClient).getAutoClaimsByPolicyId(policyId, page, size, status);
   }
 
@@ -390,21 +403,19 @@ class PolicyFunctionsTest {
     PolicyDto policy = createSamplePolicy();
     PolicyConditionsDto conditions = createSamplePolicyConditions();
 
-    CreatePolicyRequest createRequest = new CreatePolicyRequest(policy);
-    GetPolicyByIdRequest getByIdRequest = new GetPolicyByIdRequest(1L);
-    GetPolicyByPolicyNumberRequest getByNumberRequest =
-        new GetPolicyByPolicyNumberRequest("POL-2024-001");
-    GetAllPoliciesRequest getAllRequest = new GetAllPoliciesRequest();
-    UpdatePolicyRequest updateRequest = new UpdatePolicyRequest(1L, policy);
-    GetAutoClaimsByPolicyIdRequest autoClaimsRequest =
-        new GetAutoClaimsByPolicyIdRequest(1L, 0, 20, "PENDING");
-    GetHomeClaimsByPolicyIdRequest homeClaimsRequest =
-        new GetHomeClaimsByPolicyIdRequest(1L, 0, 20, "APPROVED");
-    GetHealthClaimsByPolicyIdRequest healthClaimsRequest =
-        new GetHealthClaimsByPolicyIdRequest(1L, 0, 20, "IN_REVIEW");
-    GetPolicyConditionsRequest conditionsRequest = new GetPolicyConditionsRequest();
-    UpdatePolicyConditionsRequest updateConditionsRequest =
-        new UpdatePolicyConditionsRequest(conditions);
+    CreatePolicyReq createRequest = new CreatePolicyReq(policy);
+    GetPolicyByIdReq getByIdRequest = new GetPolicyByIdReq(1L);
+    GetPolicyByPolicyNumberReq getByNumberRequest = new GetPolicyByPolicyNumberReq("POL-2024-001");
+    GetAllPoliciesReq getAllRequest = new GetAllPoliciesReq();
+    UpdatePolicyReq updateRequest = new UpdatePolicyReq(1L, policy);
+    GetAutoClaimsByPolicyIdReq autoClaimsRequest =
+        new GetAutoClaimsByPolicyIdReq(1L, 0, 20, "PENDING");
+    GetHomeClaimsByPolicyIdReq homeClaimsRequest =
+        new GetHomeClaimsByPolicyIdReq(1L, 0, 20, "APPROVED");
+    GetHealthClaimsByPolicyIdReq healthClaimsRequest =
+        new GetHealthClaimsByPolicyIdReq(1L, 0, 20, "IN_REVIEW");
+    GetPolicyConditionsReq conditionsRequest = new GetPolicyConditionsReq();
+    UpdatePolicyConditionsReq updateConditionsRequest = new UpdatePolicyConditionsReq(conditions);
 
     // Then
     assertThat(createRequest.policyDto()).isEqualTo(policy);

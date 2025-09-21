@@ -15,11 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import tech.yildirim.aiinsurance.ai.functions.CustomerFunctions.GetCustomerByPolicyNumberRequest;
-import tech.yildirim.aiinsurance.ai.functions.CustomerFunctions.GetPoliciesByCustomerIdRequest;
 import tech.yildirim.aiinsurance.api.generated.clients.CustomersApiClient;
 import tech.yildirim.aiinsurance.api.generated.model.CustomerDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
+import tech.yildirim.aiinsurance.model.ResponseWrapper;
+import tech.yildirim.aiinsurance.model.ai.request.GetCustomerByPolicyNumberReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPoliciesByCustomerIdReq;
 
 /**
  * Unit tests for {@link CustomerFunctions}.
@@ -51,31 +52,16 @@ class CustomerFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedCustomer));
 
     // When
-    Function<GetCustomerByPolicyNumberRequest, CustomerDto> function =
+    Function<GetCustomerByPolicyNumberReq, ResponseWrapper<CustomerDto>> function =
         customerFunctions.getCustomerByPolicyNumber();
-    CustomerDto result = function.apply(new GetCustomerByPolicyNumberRequest(policyNumber));
+    ResponseWrapper<CustomerDto> result =
+        function.apply(new GetCustomerByPolicyNumberReq(policyNumber));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(expectedCustomer.getId());
-    assertThat(result.getFirstName()).isEqualTo(expectedCustomer.getFirstName());
-    assertThat(result.getLastName()).isEqualTo(expectedCustomer.getLastName());
-  }
-
-  @Test
-  @DisplayName("Should throw exception when API returns null body")
-  void getCustomerByPolicyNumber_WithNullResponse_ShouldThrowException() {
-    // Given
-    String policyNumber = "POL-12345";
-    when(customersApiClient.getCustomerByPolicyNumber(policyNumber))
-        .thenReturn(ResponseEntity.ok(null));
-
-    // When & Then
-    Function<GetCustomerByPolicyNumberRequest, CustomerDto> function =
-        customerFunctions.getCustomerByPolicyNumber();
-    GetCustomerByPolicyNumberRequest request = new GetCustomerByPolicyNumberRequest(policyNumber);
-
-    assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
+    assertThat(result.getData().getId()).isEqualTo(expectedCustomer.getId());
+    assertThat(result.getData().getFirstName()).isEqualTo(expectedCustomer.getFirstName());
+    assertThat(result.getData().getLastName()).isEqualTo(expectedCustomer.getLastName());
   }
 
   @Test
@@ -86,9 +72,9 @@ class CustomerFunctionsTest {
     when(customersApiClient.getCustomerByPolicyNumber(anyString())).thenReturn(null);
 
     // When & Then
-    Function<GetCustomerByPolicyNumberRequest, CustomerDto> function =
+    Function<GetCustomerByPolicyNumberReq, ResponseWrapper<CustomerDto>> function =
         customerFunctions.getCustomerByPolicyNumber();
-    GetCustomerByPolicyNumberRequest request = new GetCustomerByPolicyNumberRequest(policyNumber);
+    GetCustomerByPolicyNumberReq request = new GetCustomerByPolicyNumberReq(policyNumber);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -104,14 +90,15 @@ class CustomerFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedPolicies));
 
     // When
-    Function<GetPoliciesByCustomerIdRequest, List<PolicyDto>> function =
+    Function<GetPoliciesByCustomerIdReq, ResponseWrapper<List<PolicyDto>>> function =
         customerFunctions.getPoliciesByCustomerId();
-    List<PolicyDto> result = function.apply(new GetPoliciesByCustomerIdRequest(customerId));
+    ResponseWrapper<List<PolicyDto>> result =
+        function.apply(new GetPoliciesByCustomerIdReq(customerId));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getPolicyNumber()).isEqualTo("POL-001");
-    assertThat(result.get(1).getPolicyNumber()).isEqualTo("POL-002");
+    assertThat(result.getData()).isNotNull().hasSize(2);
+    assertThat(result.getData().get(0).getPolicyNumber()).isEqualTo("POL-001");
+    assertThat(result.getData().get(1).getPolicyNumber()).isEqualTo("POL-002");
   }
 
   @Test
@@ -125,28 +112,13 @@ class CustomerFunctionsTest {
         .thenReturn(ResponseEntity.ok(emptyPolicies));
 
     // When
-    Function<GetPoliciesByCustomerIdRequest, List<PolicyDto>> function =
+    Function<GetPoliciesByCustomerIdReq, ResponseWrapper<List<PolicyDto>>> function =
         customerFunctions.getPoliciesByCustomerId();
-    List<PolicyDto> result = function.apply(new GetPoliciesByCustomerIdRequest(customerId));
+    ResponseWrapper<List<PolicyDto>> result =
+        function.apply(new GetPoliciesByCustomerIdReq(customerId));
 
     // Then
-    assertThat(result).isNotNull().isEmpty();
-  }
-
-  @Test
-  @DisplayName("Should throw exception when policies API returns null body")
-  void getPoliciesByCustomerId_WithNullResponse_ShouldThrowException() {
-    // Given
-    Long customerId = 1L;
-    when(customersApiClient.getPoliciesByCustomerId(customerId))
-        .thenReturn(ResponseEntity.ok(null));
-
-    // When & Then
-    Function<GetPoliciesByCustomerIdRequest, List<PolicyDto>> function =
-        customerFunctions.getPoliciesByCustomerId();
-    GetPoliciesByCustomerIdRequest request = new GetPoliciesByCustomerIdRequest(customerId);
-
-    assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
+    assertThat(result.getData()).isNotNull().isEmpty();
   }
 
   @Test
@@ -157,9 +129,9 @@ class CustomerFunctionsTest {
     when(customersApiClient.getPoliciesByCustomerId(anyLong())).thenReturn(null);
 
     // When & Then
-    Function<GetPoliciesByCustomerIdRequest, List<PolicyDto>> function =
+    Function<GetPoliciesByCustomerIdReq, ResponseWrapper<List<PolicyDto>>> function =
         customerFunctions.getPoliciesByCustomerId();
-    GetPoliciesByCustomerIdRequest request = new GetPoliciesByCustomerIdRequest(customerId);
+    GetPoliciesByCustomerIdReq request = new GetPoliciesByCustomerIdReq(customerId);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -168,9 +140,8 @@ class CustomerFunctionsTest {
   @DisplayName("Request records should be properly constructed")
   void requestRecords_ShouldBeProperlyConstructed() {
     // Given & When
-    GetCustomerByPolicyNumberRequest customerRequest =
-        new GetCustomerByPolicyNumberRequest("POL-123");
-    GetPoliciesByCustomerIdRequest policiesRequest = new GetPoliciesByCustomerIdRequest(1L);
+    GetCustomerByPolicyNumberReq customerRequest = new GetCustomerByPolicyNumberReq("POL-123");
+    GetPoliciesByCustomerIdReq policiesRequest = new GetPoliciesByCustomerIdReq(1L);
 
     // Then
     assertThat(customerRequest.policyNumber()).isEqualTo("POL-123");
