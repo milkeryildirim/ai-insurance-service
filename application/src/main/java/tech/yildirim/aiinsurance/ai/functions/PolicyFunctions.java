@@ -13,6 +13,18 @@ import tech.yildirim.aiinsurance.api.generated.model.HealthClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HomeClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyConditionsDto;
 import tech.yildirim.aiinsurance.api.generated.model.PolicyDto;
+import tech.yildirim.aiinsurance.model.ResponseWrapper;
+import tech.yildirim.aiinsurance.model.ai.request.CreatePolicyReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllPoliciesReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAutoClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHealthClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHomeClaimsByPolicyIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyByPolicyNumberReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetPolicyConditionsReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdatePolicyConditionsReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdatePolicyReq;
+import tech.yildirim.aiinsurance.security.SecuredAI;
 
 /** Defines all AI-callable functions related to policy management. */
 @Configuration
@@ -22,37 +34,8 @@ public class PolicyFunctions {
 
   private final PoliciesApiClient policiesApiClient;
 
-  // --- Request Records for Type Safety ---
-
-  /**
-   * Record to encapsulate the request for getting policy details by ID.
-   *
-   * @param policyId The unique technical identifier of the policy.
-   */
-  public record GetPolicyByIdRequest(Long policyId) {}
-
-  public record GetPolicyByPolicyNumberRequest(String policyNumber) {}
-
-  public record CreatePolicyRequest(PolicyDto policyDto) {}
-
-  public record GetAllPoliciesRequest() {} // No parameters needed
-
-  public record UpdatePolicyRequest(Long policyId, PolicyDto policyDto) {}
-
-  public record GetAutoClaimsByPolicyIdRequest(
-      Long policyId, Integer page, Integer size, String status) {}
-
-  public record GetHomeClaimsByPolicyIdRequest(
-      Long policyId, Integer page, Integer size, String status) {}
-
-  public record GetHealthClaimsByPolicyIdRequest(
-      Long policyId, Integer page, Integer size, String status) {}
-
-  public record GetPolicyConditionsRequest() {} // No parameters needed
-
-  public record UpdatePolicyConditionsRequest(PolicyConditionsDto policyConditionsDto) {}
-
   @Bean(Functions.GET_POLICY_BY_ID)
+  @SecuredAI
   @Description(
       "Retrieves detailed policy information using the policy's unique internal ID. Use this function when: "
           + "1) You have a policy ID from previous customer or policy lookups, "
@@ -61,12 +44,18 @@ public class PolicyFunctions {
           + "4) You need to refresh policy data during ongoing conversation. "
           + "This is more efficient than searching by policy number when ID is available. "
           + "Returns comprehensive policy details including coverage, premiums, dates, and status.")
-  public Function<GetPolicyByIdRequest, PolicyDto> getPolicyById() {
+  public Function<GetPolicyByIdReq, ResponseWrapper<PolicyDto>> getPolicyById() {
     return request ->
-        Objects.requireNonNull(policiesApiClient.getPolicyById(request.policyId()).getBody());
+        ResponseWrapper.<PolicyDto>builder()
+            .success(true)
+            .data(
+                Objects.requireNonNull(
+                    policiesApiClient.getPolicyById(request.policyId()).getBody()))
+            .build();
   }
 
   @Bean(Functions.GET_POLICY_BY_POLICY_NUMBER)
+  @SecuredAI
   @Description(
       "Retrieves policy information by searching with the policy number. Use this function when: "
           + "1) Customer provides their policy number (format: POL-XXXXX, POLICY-12345, or similar), "
@@ -75,13 +64,19 @@ public class PolicyFunctions {
           + "4) Verifying policy existence and details for customer inquiries. "
           + "This is the primary way to identify and retrieve specific policy information. "
           + "Returns complete policy details including type, coverage amounts, premium, effective dates, and current status.")
-  public Function<GetPolicyByPolicyNumberRequest, PolicyDto> getPolicyByPolicyNumber() {
+  public Function<GetPolicyByPolicyNumberReq, ResponseWrapper<PolicyDto>>
+      getPolicyByPolicyNumber() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient.getPolicyByPolicyNumber(request.policyNumber()).getBody());
+        ResponseWrapper.<PolicyDto>builder()
+            .success(true)
+            .data(
+                Objects.requireNonNull(
+                    policiesApiClient.getPolicyByPolicyNumber(request.policyNumber()).getBody()))
+            .build();
   }
 
   @Bean(Functions.CREATE_POLICY)
+  @SecuredAI
   @Description(
       "Creates a new insurance policy in the system. Use this function when: "
           + "1) Customer wants to purchase a new insurance policy, "
@@ -91,12 +86,18 @@ public class PolicyFunctions {
           + "Requires complete policy information including coverage details, premiums, and effective dates. "
           + "This is typically used during new policy sales process. "
           + "Returns the created policy object with assigned policy ID and number.")
-  public Function<CreatePolicyRequest, PolicyDto> createPolicy() {
+  public Function<CreatePolicyReq, ResponseWrapper<PolicyDto>> createPolicy() {
     return request ->
-        Objects.requireNonNull(policiesApiClient.createPolicy(request.policyDto()).getBody());
+        ResponseWrapper.<PolicyDto>builder()
+            .success(true)
+            .data(
+                Objects.requireNonNull(
+                    policiesApiClient.createPolicy(request.policyDto()).getBody()))
+            .build();
   }
 
   @Bean(Functions.GET_ALL_POLICIES)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Retrieves all policies in the insurance system. Use this function when: "
           + "1) Administrative tasks require a complete policy list, "
@@ -106,11 +107,16 @@ public class PolicyFunctions {
           + "WARNING: This may return a large dataset depending on system size. "
           + "Use carefully and consider if more specific searches would be more appropriate. "
           + "Returns a list of all policies with basic information including policy numbers, types, and status.")
-  public Function<GetAllPoliciesRequest, List<PolicyDto>> getAllPolicies() {
-    return request -> Objects.requireNonNull(policiesApiClient.getAllPolicies().getBody());
+  public Function<GetAllPoliciesReq, ResponseWrapper<List<PolicyDto>>> getAllPolicies() {
+    return request ->
+        ResponseWrapper.<List<PolicyDto>>builder()
+            .success(true)
+            .data(policiesApiClient.getAllPolicies().getBody())
+            .build();
   }
 
   @Bean(Functions.UPDATE_POLICY)
+  @SecuredAI
   @Description(
       "Updates existing policy information in the system. Use this function when: "
           + "1) Customer requests policy modifications like coverage changes or beneficiary updates, "
@@ -121,13 +127,16 @@ public class PolicyFunctions {
           + "Requires policy ID and updated policy object with new information. "
           + "Always verify changes with customer and explain any premium implications. "
           + "Returns the updated policy object with all modifications applied.")
-  public Function<UpdatePolicyRequest, PolicyDto> updatePolicy() {
+  public Function<UpdatePolicyReq, ResponseWrapper<PolicyDto>> updatePolicy() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient.updatePolicy(request.policyId(), request.policyDto()).getBody());
+        ResponseWrapper.<PolicyDto>builder()
+            .success(true)
+            .data(policiesApiClient.updatePolicy(request.policyId(), request.policyDto()).getBody())
+            .build();
   }
 
   @Bean(Functions.GET_AUTO_CLAIMS_BY_POLICY_ID)
+  @SecuredAI
   @Description(
       "Retrieves all auto claims associated with a specific policy from policy perspective. Use this function when: "
           + "1) Customer asks 'show me auto claims for my policy', 'what car claims do I have', or 'policy claim history', "
@@ -136,16 +145,21 @@ public class PolicyFunctions {
           + "4) Policy-focused conversations that need to include auto claim information. "
           + "This provides the same data as auto claim functions but from a policy management perspective. "
           + "Supports pagination and status filtering. Returns list of auto claims for the policy.")
-  public Function<GetAutoClaimsByPolicyIdRequest, List<AutoClaimDto>> getAutoClaimsByPolicyId() {
+  public Function<GetAutoClaimsByPolicyIdReq, ResponseWrapper<List<AutoClaimDto>>>
+      getAutoClaimsByPolicyId() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient
-                .getAutoClaimsByPolicyId(
-                    request.policyId(), request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<AutoClaimDto>>builder()
+            .success(true)
+            .data(
+                policiesApiClient
+                    .getAutoClaimsByPolicyId(
+                        request.policyId(), request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.GET_HOME_CLAIMS_BY_POLICY_ID)
+  @SecuredAI
   @Description(
       "Retrieves all home claims associated with a specific policy from policy perspective. Use this function when: "
           + "1) Customer asks 'show me home claims for my policy', 'what property claims do I have', or 'policy claim history', "
@@ -154,16 +168,21 @@ public class PolicyFunctions {
           + "4) Policy-focused conversations that need to include home claim information. "
           + "This provides the same data as home claim functions but from a policy management perspective. "
           + "Supports pagination and status filtering. Returns list of home claims for the policy.")
-  public Function<GetHomeClaimsByPolicyIdRequest, List<HomeClaimDto>> getHomeClaimsByPolicyId() {
+  public Function<GetHomeClaimsByPolicyIdReq, ResponseWrapper<List<HomeClaimDto>>>
+      getHomeClaimsByPolicyId() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient
-                .getHomeClaimsByPolicyId(
-                    request.policyId(), request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<HomeClaimDto>>builder()
+            .success(true)
+            .data(
+                policiesApiClient
+                    .getHomeClaimsByPolicyId(
+                        request.policyId(), request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.GET_HEALTH_CLAIMS_BY_POLICY_ID)
+  @SecuredAI
   @Description(
       "Retrieves all health claims associated with a specific policy from policy perspective. Use this function when: "
           + "1) Customer asks 'show me health claims for my policy', 'what medical claims do I have', or 'policy claim history', "
@@ -172,14 +191,17 @@ public class PolicyFunctions {
           + "4) Policy-focused conversations that need to include health claim information. "
           + "This provides the same data as health claim functions but from a policy management perspective. "
           + "Supports pagination and status filtering. Returns list of health claims for the policy.")
-  public Function<GetHealthClaimsByPolicyIdRequest, List<HealthClaimDto>>
+  public Function<GetHealthClaimsByPolicyIdReq, ResponseWrapper<List<HealthClaimDto>>>
       getHealthClaimsByPolicyId() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient
-                .getHealthClaimsByPolicyId(
-                    request.policyId(), request.page(), request.size(), request.status())
-                .getBody());
+        ResponseWrapper.<List<HealthClaimDto>>builder()
+            .success(true)
+            .data(
+                policiesApiClient
+                    .getHealthClaimsByPolicyId(
+                        request.policyId(), request.page(), request.size(), request.status())
+                    .getBody())
+            .build();
   }
 
   @Bean(Functions.GET_POLICY_CONDITIONS)
@@ -191,11 +213,17 @@ public class PolicyFunctions {
           + "4) Customer inquires about coverage limitations, deductibles, or policy restrictions. "
           + "Returns comprehensive policy conditions including cancellation penalties, coverage terms, "
           + "and general policy rules that apply across the insurance system.")
-  public Function<GetPolicyConditionsRequest, PolicyConditionsDto> getPolicyConditions() {
-    return request -> Objects.requireNonNull(policiesApiClient.getPolicyConditions().getBody());
+  public Function<GetPolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>>
+      getPolicyConditions() {
+    return request ->
+        ResponseWrapper.<PolicyConditionsDto>builder()
+            .success(true)
+            .data(Objects.requireNonNull(policiesApiClient.getPolicyConditions().getBody()))
+            .build();
   }
 
   @Bean(Functions.UPDATE_POLICY_CONDITIONS)
+  @SecuredAI(blockedForAI = true)
   @Description(
       "Updates the system-wide policy conditions and terms. Use this function when: "
           + "1) Administrative changes to policy terms are required, "
@@ -206,9 +234,16 @@ public class PolicyFunctions {
           + "Requires complete policy conditions object with updated terms. "
           + "Always verify changes with appropriate authorization and explain impact. "
           + "Returns the updated policy conditions with all modifications applied.")
-  public Function<UpdatePolicyConditionsRequest, PolicyConditionsDto> updatePolicyConditions() {
+  public Function<UpdatePolicyConditionsReq, ResponseWrapper<PolicyConditionsDto>>
+      updatePolicyConditions() {
     return request ->
-        Objects.requireNonNull(
-            policiesApiClient.updatePolicyConditions(request.policyConditionsDto()).getBody());
+        ResponseWrapper.<PolicyConditionsDto>builder()
+            .success(true)
+            .data(
+                Objects.requireNonNull(
+                    policiesApiClient
+                        .updatePolicyConditions(request.policyConditionsDto())
+                        .getBody()))
+            .build();
   }
 }

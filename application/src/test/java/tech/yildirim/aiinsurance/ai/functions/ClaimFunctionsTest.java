@@ -16,30 +16,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.AssignAdjusterToAutoClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.AssignAdjusterToHealthClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.AssignAdjusterToHomeClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.CreateAutoClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.CreateHealthClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.CreateHomeClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.DeleteAutoClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.DeleteHealthClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.DeleteHomeClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetAllAutoClaimsRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetAllHealthClaimsRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetAllHomeClaimsRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetAutoClaimByIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetHealthClaimByIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.GetHomeClaimByIdRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.UpdateAutoClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.UpdateHealthClaimRequest;
-import tech.yildirim.aiinsurance.ai.functions.ClaimFunctions.UpdateHomeClaimRequest;
 import tech.yildirim.aiinsurance.api.generated.clients.ClaimsApiClient;
 import tech.yildirim.aiinsurance.api.generated.model.AssignAdjusterRequestDto;
 import tech.yildirim.aiinsurance.api.generated.model.AutoClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.ClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HealthClaimDto;
 import tech.yildirim.aiinsurance.api.generated.model.HomeClaimDto;
+import tech.yildirim.aiinsurance.model.ResponseWrapper;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.AssignAdjusterToHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.CreateHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.DeleteHomeClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllAutoClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllHealthClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAllHomeClaimsReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetAutoClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHealthClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.GetHomeClaimByIdReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateAutoClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateHealthClaimReq;
+import tech.yildirim.aiinsurance.model.ai.request.UpdateHomeClaimReq;
 
 /**
  * Unit tests for {@link ClaimFunctions}.
@@ -73,14 +74,15 @@ class ClaimFunctionsTest {
     when(claimsApiClient.createAutoClaim(inputClaim)).thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<CreateAutoClaimRequest, AutoClaimDto> function = claimFunctions.createAutoClaim();
-    AutoClaimDto result = function.apply(new CreateAutoClaimRequest(inputClaim));
+    Function<CreateAutoClaimReq, ResponseWrapper<AutoClaimDto>> function =
+        claimFunctions.createAutoClaim();
+    ResponseWrapper<AutoClaimDto> result = function.apply(new CreateAutoClaimReq(inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(1L);
-    assertThat(result.getLicensePlate()).isEqualTo("ABC-123");
-    assertThat(result.getDescription()).isEqualTo("Vehicle collision on highway");
+    assertThat(result.getData().getId()).isEqualTo(1L);
+    assertThat(result.getData().getLicensePlate()).isEqualTo("ABC-123");
+    assertThat(result.getData().getDescription()).isEqualTo("Vehicle collision on highway");
     verify(claimsApiClient).createAutoClaim(inputClaim);
   }
 
@@ -92,8 +94,9 @@ class ClaimFunctionsTest {
     when(claimsApiClient.createAutoClaim(inputClaim)).thenReturn(ResponseEntity.ok(null));
 
     // When & Then
-    Function<CreateAutoClaimRequest, AutoClaimDto> function = claimFunctions.createAutoClaim();
-    CreateAutoClaimRequest request = new CreateAutoClaimRequest(inputClaim);
+    Function<CreateAutoClaimReq, ResponseWrapper<AutoClaimDto>> function =
+        claimFunctions.createAutoClaim();
+    CreateAutoClaimReq request = new CreateAutoClaimReq(inputClaim);
 
     assertThatThrownBy(() -> function.apply(request)).isInstanceOf(NullPointerException.class);
   }
@@ -109,13 +112,14 @@ class ClaimFunctionsTest {
     when(claimsApiClient.getAutoClaimById(claimId)).thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<GetAutoClaimByIdRequest, AutoClaimDto> function = claimFunctions.getAutoClaimById();
-    AutoClaimDto result = function.apply(new GetAutoClaimByIdRequest(claimId));
+    Function<GetAutoClaimByIdReq, ResponseWrapper<AutoClaimDto>> function =
+        claimFunctions.getAutoClaimById();
+    ResponseWrapper<AutoClaimDto> result = function.apply(new GetAutoClaimByIdReq(claimId));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getLicensePlate()).isEqualTo("ABC-123");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getLicensePlate()).isEqualTo("ABC-123");
     verify(claimsApiClient).getAutoClaimById(claimId);
   }
 
@@ -132,14 +136,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetAllAutoClaimsRequest, List<AutoClaimDto>> function =
+    Function<GetAllAutoClaimsReq, ResponseWrapper<List<AutoClaimDto>>> function =
         claimFunctions.getAllAutoClaims();
-    List<AutoClaimDto> result = function.apply(new GetAllAutoClaimsRequest(page, size, status));
+    ResponseWrapper<List<AutoClaimDto>> result =
+        function.apply(new GetAllAutoClaimsReq(page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getLicensePlate()).isEqualTo("ABC-123");
-    assertThat(result.get(1).getLicensePlate()).isEqualTo("XYZ-789");
+    assertThat(result.getData()).isNotNull().hasSize(2);
+    assertThat(result.getData().get(0).getLicensePlate()).isEqualTo("ABC-123");
+    assertThat(result.getData().get(1).getLicensePlate()).isEqualTo("XYZ-789");
     verify(claimsApiClient).getAllAutoClaims(page, size, status);
   }
 
@@ -157,13 +162,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<UpdateAutoClaimRequest, AutoClaimDto> function = claimFunctions.updateAutoClaim();
-    AutoClaimDto result = function.apply(new UpdateAutoClaimRequest(claimId, inputClaim));
+    Function<UpdateAutoClaimReq, ResponseWrapper<AutoClaimDto>> function =
+        claimFunctions.updateAutoClaim();
+    ResponseWrapper<AutoClaimDto> result =
+        function.apply(new UpdateAutoClaimReq(claimId, inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getDescription()).isEqualTo("Updated accident description");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getDescription()).isEqualTo("Updated accident description");
     verify(claimsApiClient).updateAutoClaim(claimId, inputClaim);
   }
 
@@ -176,11 +183,13 @@ class ClaimFunctionsTest {
     when(claimsApiClient.deleteAutoClaim(claimId)).thenReturn(ResponseEntity.noContent().build());
 
     // When
-    Function<DeleteAutoClaimRequest, String> function = claimFunctions.deleteAutoClaim();
-    String result = function.apply(new DeleteAutoClaimRequest(claimId));
+    Function<DeleteAutoClaimReq, ResponseWrapper<String>> function =
+        claimFunctions.deleteAutoClaim();
+    ResponseWrapper<String> result = function.apply(new DeleteAutoClaimReq(claimId));
 
     // Then
-    assertThat(result).contains("SUCCESS").contains("Auto claim deleted successfully");
+    assertThat(result.getData()).contains("Auto claim deleted successfully");
+    assertThat(result.isSuccess()).isTrue();
     verify(claimsApiClient).deleteAutoClaim(claimId);
   }
 
@@ -197,14 +206,14 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<AssignAdjusterToAutoClaimRequest, AutoClaimDto> function =
+    Function<AssignAdjusterToAutoClaimReq, ResponseWrapper<AutoClaimDto>> function =
         claimFunctions.assignAdjusterToAutoClaim();
-    AutoClaimDto result =
-        function.apply(new AssignAdjusterToAutoClaimRequest(claimId, adjusterRequest));
+    ResponseWrapper<AutoClaimDto> result =
+        function.apply(new AssignAdjusterToAutoClaimReq(claimId, adjusterRequest));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
+    assertThat(result.getData().getId()).isEqualTo(claimId);
     verify(claimsApiClient).assignAdjusterToAutoClaim(claimId, adjusterRequest);
   }
 
@@ -221,14 +230,16 @@ class ClaimFunctionsTest {
     when(claimsApiClient.createHomeClaim(inputClaim)).thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<CreateHomeClaimRequest, HomeClaimDto> function = claimFunctions.createHomeClaim();
-    HomeClaimDto result = function.apply(new CreateHomeClaimRequest(inputClaim));
+    Function<CreateHomeClaimReq, ResponseWrapper<HomeClaimDto>> function =
+        claimFunctions.createHomeClaim();
+    ResponseWrapper<HomeClaimDto> result = function.apply(new CreateHomeClaimReq(inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(1L);
-    assertThat(result.getTypeOfDamage()).isEqualTo("Fire damage");
-    assertThat(result.getDescription()).isEqualTo("Kitchen fire caused significant damage");
+    assertThat(result.getData().getId()).isEqualTo(1L);
+    assertThat(result.getData().getTypeOfDamage()).isEqualTo("Fire damage");
+    assertThat(result.getData().getDescription())
+        .isEqualTo("Kitchen fire caused significant damage");
     verify(claimsApiClient).createHomeClaim(inputClaim);
   }
 
@@ -243,13 +254,14 @@ class ClaimFunctionsTest {
     when(claimsApiClient.getHomeClaimById(claimId)).thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<GetHomeClaimByIdRequest, HomeClaimDto> function = claimFunctions.getHomeClaimById();
-    HomeClaimDto result = function.apply(new GetHomeClaimByIdRequest(claimId));
+    Function<GetHomeClaimByIdReq, ResponseWrapper<HomeClaimDto>> function =
+        claimFunctions.getHomeClaimById();
+    ResponseWrapper<HomeClaimDto> result = function.apply(new GetHomeClaimByIdReq(claimId));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getTypeOfDamage()).isEqualTo("Fire damage");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getTypeOfDamage()).isEqualTo("Fire damage");
     verify(claimsApiClient).getHomeClaimById(claimId);
   }
 
@@ -266,14 +278,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetAllHomeClaimsRequest, List<HomeClaimDto>> function =
+    Function<GetAllHomeClaimsReq, ResponseWrapper<List<HomeClaimDto>>> function =
         claimFunctions.getAllHomeClaims();
-    List<HomeClaimDto> result = function.apply(new GetAllHomeClaimsRequest(page, size, status));
+    ResponseWrapper<List<HomeClaimDto>> result =
+        function.apply(new GetAllHomeClaimsReq(page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getTypeOfDamage()).isEqualTo("Fire damage");
-    assertThat(result.get(1).getTypeOfDamage()).isEqualTo("Water damage");
+    assertThat(result.getData()).isNotNull().hasSize(2);
+    assertThat(result.getData().get(0).getTypeOfDamage()).isEqualTo("Fire damage");
+    assertThat(result.getData().get(1).getTypeOfDamage()).isEqualTo("Water damage");
     verify(claimsApiClient).getAllHomeClaims(page, size, status);
   }
 
@@ -291,13 +304,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<UpdateHomeClaimRequest, HomeClaimDto> function = claimFunctions.updateHomeClaim();
-    HomeClaimDto result = function.apply(new UpdateHomeClaimRequest(claimId, inputClaim));
+    Function<UpdateHomeClaimReq, ResponseWrapper<HomeClaimDto>> function =
+        claimFunctions.updateHomeClaim();
+    ResponseWrapper<HomeClaimDto> result =
+        function.apply(new UpdateHomeClaimReq(claimId, inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getDescription()).isEqualTo("Updated damage assessment");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getDescription()).isEqualTo("Updated damage assessment");
     verify(claimsApiClient).updateHomeClaim(claimId, inputClaim);
   }
 
@@ -310,11 +325,13 @@ class ClaimFunctionsTest {
     when(claimsApiClient.deleteHomeClaim(claimId)).thenReturn(ResponseEntity.noContent().build());
 
     // When
-    Function<DeleteHomeClaimRequest, String> function = claimFunctions.deleteHomeClaim();
-    String result = function.apply(new DeleteHomeClaimRequest(claimId));
+    Function<DeleteHomeClaimReq, ResponseWrapper<String>> function =
+        claimFunctions.deleteHomeClaim();
+    ResponseWrapper<String> result = function.apply(new DeleteHomeClaimReq(claimId));
 
     // Then
-    assertThat(result).contains("SUCCESS").contains("Home claim deleted successfully");
+    assertThat(result.getData()).contains("Home claim deleted successfully");
+    assertThat(result.isSuccess()).isTrue();
     verify(claimsApiClient).deleteHomeClaim(claimId);
   }
 
@@ -331,14 +348,14 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<AssignAdjusterToHomeClaimRequest, HomeClaimDto> function =
+    Function<AssignAdjusterToHomeClaimReq, ResponseWrapper<HomeClaimDto>> function =
         claimFunctions.assignAdjusterToHomeClaim();
-    HomeClaimDto result =
-        function.apply(new AssignAdjusterToHomeClaimRequest(claimId, adjusterRequest));
+    ResponseWrapper<HomeClaimDto> result =
+        function.apply(new AssignAdjusterToHomeClaimReq(claimId, adjusterRequest));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
+    assertThat(result.getData().getId()).isEqualTo(claimId);
     verify(claimsApiClient).assignAdjusterToHomeClaim(claimId, adjusterRequest);
   }
 
@@ -356,15 +373,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<CreateHealthClaimRequest, HealthClaimDto> function =
+    Function<CreateHealthClaimReq, ResponseWrapper<HealthClaimDto>> function =
         claimFunctions.createHealthClaim();
-    HealthClaimDto result = function.apply(new CreateHealthClaimRequest(inputClaim));
+    ResponseWrapper<HealthClaimDto> result = function.apply(new CreateHealthClaimReq(inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(1L);
-    assertThat(result.getMedicalProvider()).isEqualTo("City General Hospital");
-    assertThat(result.getDescription()).isEqualTo("Emergency room visit for chest pain");
+    assertThat(result.getData().getId()).isEqualTo(1L);
+    assertThat(result.getData().getMedicalProvider()).isEqualTo("City General Hospital");
+    assertThat(result.getData().getDescription()).isEqualTo("Emergency room visit for chest pain");
     verify(claimsApiClient).createHealthClaim(inputClaim);
   }
 
@@ -379,14 +396,14 @@ class ClaimFunctionsTest {
     when(claimsApiClient.getHealthClaimById(claimId)).thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<GetHealthClaimByIdRequest, HealthClaimDto> function =
+    Function<GetHealthClaimByIdReq, ResponseWrapper<HealthClaimDto>> function =
         claimFunctions.getHealthClaimById();
-    HealthClaimDto result = function.apply(new GetHealthClaimByIdRequest(claimId));
+    ResponseWrapper<HealthClaimDto> result = function.apply(new GetHealthClaimByIdReq(claimId));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getMedicalProvider()).isEqualTo("City General Hospital");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getMedicalProvider()).isEqualTo("City General Hospital");
     verify(claimsApiClient).getHealthClaimById(claimId);
   }
 
@@ -403,14 +420,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaims));
 
     // When
-    Function<GetAllHealthClaimsRequest, List<HealthClaimDto>> function =
+    Function<GetAllHealthClaimsReq, ResponseWrapper<List<HealthClaimDto>>> function =
         claimFunctions.getAllHealthClaims();
-    List<HealthClaimDto> result = function.apply(new GetAllHealthClaimsRequest(page, size, status));
+    ResponseWrapper<List<HealthClaimDto>> result =
+        function.apply(new GetAllHealthClaimsReq(page, size, status));
 
     // Then
-    assertThat(result).isNotNull().hasSize(2);
-    assertThat(result.get(0).getMedicalProvider()).isEqualTo("City General Hospital");
-    assertThat(result.get(1).getMedicalProvider()).isEqualTo("Family Care Clinic");
+    assertThat(result.getData()).isNotNull().hasSize(2);
+    assertThat(result.getData().get(0).getMedicalProvider()).isEqualTo("City General Hospital");
+    assertThat(result.getData().get(1).getMedicalProvider()).isEqualTo("Family Care Clinic");
     verify(claimsApiClient).getAllHealthClaims(page, size, status);
   }
 
@@ -428,14 +446,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<UpdateHealthClaimRequest, HealthClaimDto> function =
+    Function<UpdateHealthClaimReq, ResponseWrapper<HealthClaimDto>> function =
         claimFunctions.updateHealthClaim();
-    HealthClaimDto result = function.apply(new UpdateHealthClaimRequest(claimId, inputClaim));
+    ResponseWrapper<HealthClaimDto> result =
+        function.apply(new UpdateHealthClaimReq(claimId, inputClaim));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
-    assertThat(result.getDescription()).isEqualTo("Updated medical assessment");
+    assertThat(result.getData().getId()).isEqualTo(claimId);
+    assertThat(result.getData().getDescription()).isEqualTo("Updated medical assessment");
     verify(claimsApiClient).updateHealthClaim(claimId, inputClaim);
   }
 
@@ -448,11 +467,13 @@ class ClaimFunctionsTest {
     when(claimsApiClient.deleteHealthClaim(claimId)).thenReturn(ResponseEntity.noContent().build());
 
     // When
-    Function<DeleteHealthClaimRequest, String> function = claimFunctions.deleteHealthClaim();
-    String result = function.apply(new DeleteHealthClaimRequest(claimId));
+    Function<DeleteHealthClaimReq, ResponseWrapper<String>> function =
+        claimFunctions.deleteHealthClaim();
+    ResponseWrapper<String> result = function.apply(new DeleteHealthClaimReq(claimId));
 
     // Then
-    assertThat(result).contains("SUCCESS").contains("Health claim deleted successfully");
+    assertThat(result.getData()).contains("Health claim deleted successfully");
+    assertThat(result.isSuccess()).isTrue();
     verify(claimsApiClient).deleteHealthClaim(claimId);
   }
 
@@ -469,14 +490,15 @@ class ClaimFunctionsTest {
         .thenReturn(ResponseEntity.ok(expectedClaim));
 
     // When
-    Function<AssignAdjusterToHealthClaimRequest, HealthClaimDto> function =
+
+    Function<AssignAdjusterToHealthClaimReq, ResponseWrapper<HealthClaimDto>> function =
         claimFunctions.assignAdjusterToHealthClaim();
-    HealthClaimDto result =
-        function.apply(new AssignAdjusterToHealthClaimRequest(claimId, adjusterRequest));
+    ResponseWrapper<HealthClaimDto> result =
+        function.apply(new AssignAdjusterToHealthClaimReq(claimId, adjusterRequest));
 
     // Then
     assertThat(result).isNotNull();
-    assertThat(result.getId()).isEqualTo(claimId);
+    assertThat(result.getData().getId()).isEqualTo(claimId);
     verify(claimsApiClient).assignAdjusterToHealthClaim(claimId, adjusterRequest);
   }
 
@@ -491,30 +513,29 @@ class ClaimFunctionsTest {
     HealthClaimDto healthClaim = createSampleHealthClaim();
     AssignAdjusterRequestDto adjusterRequest = createSampleAdjusterRequest();
 
-    CreateAutoClaimRequest createAutoRequest = new CreateAutoClaimRequest(autoClaim);
-    GetAutoClaimByIdRequest getAutoByIdRequest = new GetAutoClaimByIdRequest(1L);
-    GetAllAutoClaimsRequest getAllAutoRequest = new GetAllAutoClaimsRequest(0, 20, "PENDING");
-    UpdateAutoClaimRequest updateAutoRequest = new UpdateAutoClaimRequest(1L, autoClaim);
-    DeleteAutoClaimRequest deleteAutoRequest = new DeleteAutoClaimRequest(1L);
-    AssignAdjusterToAutoClaimRequest assignAutoRequest =
-        new AssignAdjusterToAutoClaimRequest(1L, adjusterRequest);
+    CreateAutoClaimReq createAutoRequest = new CreateAutoClaimReq(autoClaim);
+    GetAutoClaimByIdReq getAutoByIdRequest = new GetAutoClaimByIdReq(1L);
+    GetAllAutoClaimsReq getAllAutoRequest = new GetAllAutoClaimsReq(0, 20, "PENDING");
+    UpdateAutoClaimReq updateAutoRequest = new UpdateAutoClaimReq(1L, autoClaim);
+    DeleteAutoClaimReq deleteAutoRequest = new DeleteAutoClaimReq(1L);
+    AssignAdjusterToAutoClaimReq assignAutoRequest =
+        new AssignAdjusterToAutoClaimReq(1L, adjusterRequest);
 
-    CreateHomeClaimRequest createHomeRequest = new CreateHomeClaimRequest(homeClaim);
-    GetHomeClaimByIdRequest getHomeByIdRequest = new GetHomeClaimByIdRequest(1L);
-    GetAllHomeClaimsRequest getAllHomeRequest = new GetAllHomeClaimsRequest(0, 20, "APPROVED");
-    UpdateHomeClaimRequest updateHomeRequest = new UpdateHomeClaimRequest(1L, homeClaim);
-    DeleteHomeClaimRequest deleteHomeRequest = new DeleteHomeClaimRequest(1L);
-    AssignAdjusterToHomeClaimRequest assignHomeRequest =
-        new AssignAdjusterToHomeClaimRequest(1L, adjusterRequest);
+    CreateHomeClaimReq createHomeRequest = new CreateHomeClaimReq(homeClaim);
+    GetHomeClaimByIdReq getHomeByIdRequest = new GetHomeClaimByIdReq(1L);
+    GetAllHomeClaimsReq getAllHomeRequest = new GetAllHomeClaimsReq(0, 20, "APPROVED");
+    UpdateHomeClaimReq updateHomeRequest = new UpdateHomeClaimReq(1L, homeClaim);
+    DeleteHomeClaimReq deleteHomeRequest = new DeleteHomeClaimReq(1L);
+    AssignAdjusterToHomeClaimReq assignHomeRequest =
+        new AssignAdjusterToHomeClaimReq(1L, adjusterRequest);
 
-    CreateHealthClaimRequest createHealthRequest = new CreateHealthClaimRequest(healthClaim);
-    GetHealthClaimByIdRequest getHealthByIdRequest = new GetHealthClaimByIdRequest(1L);
-    GetAllHealthClaimsRequest getAllHealthRequest =
-        new GetAllHealthClaimsRequest(0, 20, "IN_REVIEW");
-    UpdateHealthClaimRequest updateHealthRequest = new UpdateHealthClaimRequest(1L, healthClaim);
-    DeleteHealthClaimRequest deleteHealthRequest = new DeleteHealthClaimRequest(1L);
-    AssignAdjusterToHealthClaimRequest assignHealthRequest =
-        new AssignAdjusterToHealthClaimRequest(1L, adjusterRequest);
+    CreateHealthClaimReq createHealthRequest = new CreateHealthClaimReq(healthClaim);
+    GetHealthClaimByIdReq getHealthByIdRequest = new GetHealthClaimByIdReq(1L);
+    GetAllHealthClaimsReq getAllHealthRequest = new GetAllHealthClaimsReq(0, 20, "IN_REVIEW");
+    UpdateHealthClaimReq updateHealthRequest = new UpdateHealthClaimReq(1L, healthClaim);
+    DeleteHealthClaimReq deleteHealthRequest = new DeleteHealthClaimReq(1L);
+    AssignAdjusterToHealthClaimReq assignHealthRequest =
+        new AssignAdjusterToHealthClaimReq(1L, adjusterRequest);
 
     // Then
     assertThat(createAutoRequest.autoClaimDto()).isEqualTo(autoClaim);
