@@ -139,6 +139,7 @@ public class SecurityAspect {
    * @param joinPoint the AOP join point for logging and method identification
    * @return a new function that applies security validations before calling the original function
    */
+  @SuppressWarnings("unchecked")
   private <T, R> Function<T, R> wrapFunction(
       Function<T, R> originalFunction, SecuredAI securedAI, ProceedingJoinPoint joinPoint) {
     return request -> {
